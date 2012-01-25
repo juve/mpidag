@@ -24,7 +24,7 @@ int recv_request(string &name, string &command) {
     }
     
     name.clear();
-    name += string(buf);
+    name += buf;
     
     return 0;
 }
@@ -41,7 +41,7 @@ void recv_response(string &name, int &exitcode, int &worker) {
     MPI_Recv(buf, MAX_MESSAGE, MPI_CHAR, MPI_ANY_SOURCE, TAG_RESULT, MPI_COMM_WORLD, &status);
     
     name.clear();
-    name += string(buf);
+    name += buf;
     worker = status.MPI_SOURCE;
     exitcode = 0;
 }
