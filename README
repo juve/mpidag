@@ -1,0 +1,15 @@
+This is a prototype workflow engine that runs as an MPI job.
+
+It has only been tested with OpenMP on my laptop.
+
+The workflows are simple DAGs described in a format similar to what Condor
+DAGMan uses. There are some examples in the test directory.
+
+To run it you just do:
+
+    $ mpirun -n 4 mpidag test/diamond.dag
+
+The scheduling is very basic round-robin, with no task prioritization.
+
+The stdout/stderr of jobs is not currently captured. It should be forwarded
+to the stdout/stderr of the master though.
