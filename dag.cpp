@@ -11,14 +11,13 @@
 Task::Task(const string &name, const string &command) {
     this->name = string(name);
     this->command = string(command);
-    this->finished = false;
+    this->success = false;
 }
 
 Task::~Task() {
 }
 
 DAG::DAG() {
-    this->finished = 0;
 }
 
 DAG::~DAG() {
@@ -145,12 +144,17 @@ void DAG::write(const string &filename, bool rescue) const {
 
 void DAG::queue_ready_task(Task *t) {
     this->ready.push(t);
+    this->queue.insert(t);
 }
 
-void DAG::mark_task_finished(Task *t) {
+void DAG::mark_task_finished(Task *t, int exitcode) {
     // Mark task
-    t->finished = true;
-    this->finished += 1;
+    if (exitcode == 0) {
+        t->success = true;
+    }
+    
+    // Remove from the queue
+    this->queue.erase(t);
     
     // Release ready children
     for (unsigned i=0; i<t->children.size(); i++) {
@@ -158,7 +162,7 @@ void DAG::mark_task_finished(Task *t) {
         bool ready = true;
         for (unsigned j=0; j<c->parents.size(); j++) {
             Task *p = c->parents[j];
-            if (!p->finished) {
+            if (!p->success) {
                 ready = false;
             }
         }
@@ -182,5 +186,5 @@ Task *DAG::next_ready_task() {
 }
 
 bool DAG::is_finished() {
-    return this->finished == this->tasks.size();
+    return this->queue.empty();
 }

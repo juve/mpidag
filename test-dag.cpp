@@ -50,7 +50,7 @@ void diamond_dag() {
         failure("Queued non-root tasks");
     }
     
-    dag.mark_task_finished(a);
+    dag.mark_task_finished(a, 0);
     
     if (!dag.has_ready_task()) {
         failure("Marking did not release tasks");
@@ -74,12 +74,12 @@ void diamond_dag() {
         failure("Wrong task released: %s", cb->name.c_str());
     }
     
-    dag.mark_task_finished(bc);
+    dag.mark_task_finished(bc, 0);
     if (dag.has_ready_task()) {
         failure("Marking released a task when it shouldn't");
     }
     
-    dag.mark_task_finished(cb);
+    dag.mark_task_finished(cb, 0);
     if (!dag.has_ready_task()) {
         failure("Marking all parents did not release task D");
     }
@@ -97,15 +97,44 @@ void diamond_dag() {
         failure("DAG is not finished");
     }
     
-    dag.mark_task_finished(d);
+    dag.mark_task_finished(d, 0);
     
     if (!dag.is_finished()) {
         failure("DAG is finished");
     }
 }
 
+void diamond_dag_failure() {
+    DAG dag;
+    dag.read("test/diamond.dag");
+    
+    if (!dag.has_ready_task()) {
+        failure("Did not queue root tasks");
+    }
+    
+    Task *a = dag.next_ready_task();
+    if (a->name.compare("A") != 0) {
+        failure("Queued non root task %s", a->name.c_str());
+    }
+    
+    if (dag.has_ready_task()) {
+        failure("Queued non-root tasks");
+    }
+    
+    dag.mark_task_finished(a, 1);
+    
+    if (dag.has_ready_task()) {
+        failure("Released tasks even though parent failed");
+    }
+    
+    if (!dag.is_finished()) {
+        failure("DAG should have been finished after A failed");
+    }
+}
+
 int main(int argc, char *argv[]) {
     test_dag();
     diamond_dag();
+    diamond_dag_failure();
     return 0;
 }

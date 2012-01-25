@@ -5,6 +5,7 @@
 #include <map>
 #include <queue>
 #include <vector>
+#include <set>
 
 using namespace std;
 
@@ -15,7 +16,7 @@ public:
     vector<Task *> children;
     vector<Task *> parents;
     
-    bool finished;
+    bool success;
     
     Task(const string &name, const string &command);
     ~Task();
@@ -24,7 +25,7 @@ public:
 class DAG {
     queue<Task *> ready;
     map<string, Task *> tasks;
-    unsigned finished;
+    set<Task *> queue;
 public:
     DAG();
     ~DAG();
@@ -32,7 +33,7 @@ public:
     Task *get_task(const string &name) const;
     void add_task(Task *task);
     void add_edge(const string &parent, const string &child);
-    void mark_task_finished(Task *t);
+    void mark_task_finished(Task *t, int exitcode);
     void queue_ready_task(Task *t);
     bool has_ready_task();
     Task *next_ready_task();

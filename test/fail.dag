@@ -1,0 +1,6 @@
+TASK OK /bin/date
+TASK FAIL /bin/false
+TASK NO /bin/date
+
+EDGE OK FAIL
+EDGE FAIL NO

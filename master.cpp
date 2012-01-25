@@ -27,7 +27,7 @@ void Master::wait_for_result() {
     
     // Mark task finished
     Task *t = this->dag.get_task(name);
-    this->dag.mark_task_finished(t);
+    this->dag.mark_task_finished(t, exitcode);
     
     printf("Task %s finished with exitcode %d\n", name.c_str(), exitcode);
 }
