@@ -1,0 +1,5 @@
+*.o
+mpidag
+test-dag
+test-strlib
+Makefile.d
