@@ -14,7 +14,7 @@ class Master {
 public:
     Master(const string &dagfile);
     ~Master();
-    void run();
+    int run();
     void add_worker(int worker);
     bool has_idle_worker();
     void mark_worker_idle(int worker);

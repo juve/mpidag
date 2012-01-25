@@ -38,6 +38,7 @@ public:
     bool has_ready_task();
     Task *next_ready_task();
     bool is_finished();
+    bool is_failed();
     void read(const string &filename);
     void write(const string &filename, bool rescue=true) const;
 };

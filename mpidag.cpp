@@ -17,13 +17,15 @@ int mpidag(int argc, char *argv[]) {
         return 1;
     }
     
+    int rc = 0;
+    
     if (rank == 0) {
-        Master(string(argv[1])).run();
+        rc = Master(string(argv[1])).run();
     } else {
         Worker().run();
     }
     
-    return 0;
+    return rc;
 }
 
 int main(int argc, char *argv[]) {

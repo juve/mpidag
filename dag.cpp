@@ -188,3 +188,22 @@ Task *DAG::next_ready_task() {
 bool DAG::is_finished() {
     return this->queue.empty();
 }
+
+bool DAG::is_failed() {
+    bool finished = this->is_finished();
+    if (!finished) {
+        failure("Not finished");
+    }
+    
+    bool success = true;
+    map<string, Task *>::iterator i;
+    for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
+        Task *t = (*i).second;
+        if (!t->success) {
+            success = false;
+            break;
+        }
+    }
+    
+    return !success;
+}

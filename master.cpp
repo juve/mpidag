@@ -53,7 +53,7 @@ void Master::mark_worker_idle(int worker) {
     this->idle.push(worker);
 }
 
-void Master::run() {
+int Master::run() {
     printf("Master starting...\n");
     
     int numprocs;
@@ -96,5 +96,11 @@ void Master::run() {
     
     for (int i=1; i<=numworkers; i++) {
         send_shutdown(i);
+    }
+    
+    if (this->dag.is_failed()) {
+        return 1;
+    } else {
+        return 0;
     }
 }
