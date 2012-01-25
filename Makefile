@@ -24,10 +24,10 @@ test-dag: test-dag.o $(OBJECTS)
 	$(CXX) -c $(CFLAGS) $< -o $@
 
 test: $(TESTS)
-	for test in $(TESTS); do echo $$test; ./$$test; done
+	for test in $^; do echo $$test; ./$$test; done
 
 clean:
-	rm -f $(OBJECTS) $(TEST_OBJECTS) $(TARGETS) $(TESTS) Makefile.d
+	rm -f mpidag.o $(OBJECTS) $(TEST_OBJECTS) $(TARGETS) $(TESTS) Makefile.d
 
 depends: Makefile.d
 
