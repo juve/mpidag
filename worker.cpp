@@ -19,7 +19,11 @@ void Worker::run() {
         string name;
         string command;
         
-        recv_request(name, command);
+        int shutdown = recv_request(name, command);
+        
+        if (shutdown) {
+            break;
+        }
         
         printf("Running task %s on worker %d\n", name.c_str(), rank);
         

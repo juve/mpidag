@@ -93,5 +93,8 @@ void Master::run() {
     }
     
     printf("Workflow finished\n");
-    MPI_Abort(MPI_COMM_WORLD, 0);
+    
+    for (int i=1; i<=numworkers; i++) {
+        send_shutdown(i);
+    }
 }
