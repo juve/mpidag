@@ -1,11 +1,19 @@
 This is a prototype workflow engine that runs as an MPI job.
 
-It has only been tested with OpenMP on my laptop.
+It has only been tested with Open MPI on my laptop.
 
 The workflows are simple DAGs described in a format similar to what Condor
 DAGMan uses. There are some examples in the test directory.
 
-To run it you just do:
+To build it do:
+
+	$ make
+
+To run tests do:
+
+	$ make test
+
+To run a workflow do:
 
     $ mpirun -n 4 mpidag test/diamond.dag
 
