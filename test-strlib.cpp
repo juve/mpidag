@@ -81,6 +81,11 @@ int main(int argc, char *argv[]) {
     test_split("foo,bar", v, ",");
     v.clear();
     
+    v.push_back("foo");
+    v.push_back("bar baz");
+    test_split("foo    bar baz", v, " ", 1);
+    v.clear();
+    
     // SPLIT ARGS
     v.push_back("foo");
     v.push_back("bar");

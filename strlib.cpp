@@ -58,6 +58,7 @@ void split(vector<string> &v, const string &line, const string &delim, unsigned 
     
     // Last one
     if (arg.length() > 0) {
+        trim(arg, delim);
         v.push_back(arg);
     }
 }

@@ -12,19 +12,19 @@ class Task {
 public:
     string name;
     string command;
-    vector<string> args;
     vector<Task *> children;
     vector<Task *> parents;
     
     bool finished;
     
-    Task(const string &name, const string &command, const vector<string> &args);
+    Task(const string &name, const string &command);
     ~Task();
 };
 
 class DAG {
     queue<Task *> ready;
     map<string, Task *> tasks;
+    unsigned finished;
 public:
     DAG();
     ~DAG();
@@ -36,6 +36,7 @@ public:
     void queue_ready_task(Task *t);
     bool has_ready_task();
     Task *next_ready_task();
+    bool is_finished();
     void read(const string &filename);
     void write(const string &filename, bool rescue=true) const;
 };

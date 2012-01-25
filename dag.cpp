@@ -8,12 +8,9 @@
 
 #define MAX_LINE 16384
 
-Task::Task(const string &name, const string &command, const vector<string> &args) {
+Task::Task(const string &name, const string &command) {
     this->name = string(name);
     this->command = string(command);
-    for (unsigned i=0; i<args.size(); i++) {
-        this->args.push_back(args[i]);
-    }
     this->finished = false;
 }
 
@@ -21,6 +18,7 @@ Task::~Task() {
 }
 
 DAG::DAG() {
+    this->finished = 0;
 }
 
 DAG::~DAG() {
@@ -91,7 +89,7 @@ void DAG::read(const string &filename) {
         if (rec.find("TASK", 0, 4) == 0) {
             vector<string> v;
             
-            split(v, rec, DELIM, 3);
+            split(v, rec, DELIM, 2);
             
             if (v.size() < 3) {
                 failure("Invalid TASK record: %s\n", line);
@@ -99,17 +97,13 @@ void DAG::read(const string &filename) {
             
             string name = v[1];
             string cmd = v[2];
-            vector<string> args;
-            if (v.size() > 3) {
-                split_args(args, v[3]);
-            }
-            
+                        
             // Check for duplicate tasks
             if (this->has_task(name)) {
                 failure("Duplicate task: %s", name.c_str());
             }
             
-            Task *t = new Task(name, cmd, args);
+            Task *t = new Task(name, cmd);
             
             this->add_task(t);
             
@@ -156,6 +150,7 @@ void DAG::queue_ready_task(Task *t) {
 void DAG::mark_task_finished(Task *t) {
     // Mark task
     t->finished = true;
+    this->finished += 1;
     
     // Release ready children
     for (unsigned i=0; i<t->children.size(); i++) {
@@ -184,4 +179,8 @@ Task *DAG::next_ready_task() {
     Task *t = this->ready.front();
     this->ready.pop();
     return t;
+}
+
+bool DAG::is_finished() {
+    return this->finished == this->tasks.size();
 }

@@ -8,10 +8,17 @@ class Master {
     string dagfile;
     DAG dag;
     queue<int> idle;
+    
+    void submit_task(Task *t, int worker);
+    void wait_for_result();
 public:
     Master(const string &dagfile);
     ~Master();
-    void run();    
+    void run();
+    void add_worker(int worker);
+    bool has_idle_worker();
+    void mark_worker_idle(int worker);
+    int next_idle_worker();
 };
 
 #endif /* MASTER_H */

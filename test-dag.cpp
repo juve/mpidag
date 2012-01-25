@@ -12,22 +12,16 @@ void test_dag() {
     if (alpha == NULL) {
         failure("Didn't parse Alpha");
     }
-    if (alpha->command.compare("/bin/echo") != 0) {
-        failure("Command failed for Alpha");
-    }
-    if (alpha->args.size() != 1 || alpha->args[0].compare("Alpha") != 0) {
-        failure("Args failed for Alpha");
+    if (alpha->command.compare("/bin/echo Alpha") != 0) {
+        failure("Command failed for Alpha: %s", alpha->command.c_str());
     }
     
     Task *beta = dag.get_task("Beta");
     if (beta == NULL) {
         failure("Didn't parse Beta");
     }
-    if (beta->command.compare("/bin/echo") != 0) {
-        failure("Command failed for Beta");
-    }
-    if (beta->args.size() != 1 || beta->args[0].compare("Beta") != 0) {
-        failure("Args failed for Beta");
+    if (beta->command.compare("/bin/echo Beta") != 0) {
+        failure("Command failed for Beta: %s", beta->command.c_str());
     }
     
     if (alpha->children[0] != beta) {
@@ -97,6 +91,16 @@ void diamond_dag() {
     
     if (dag.has_ready_task()) {
         failure("No more tasks are available");
+    }
+    
+    if (dag.is_finished()) {
+        failure("DAG is not finished");
+    }
+    
+    dag.mark_task_finished(d);
+    
+    if (!dag.is_finished()) {
+        failure("DAG is finished");
     }
 }
 

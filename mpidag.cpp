@@ -7,17 +7,17 @@
 using namespace std;
 
 int mpidag(int argc, char *argv[]) {
-    int myid;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     if (argc != 2) {
-        if (myid == 0) {
+        if (rank == 0) {
             fprintf(stderr, "Usage: %s DAGFILE\n", argv[0]);
         }
         return 1;
     }
     
-    if (myid == 0) {
+    if (rank == 0) {
         Master(string(argv[1])).run();
     } else {
         Worker().run();
