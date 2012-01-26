@@ -82,7 +82,9 @@ int mpidag(int argc, char *argv[]) {
             }
             logfile = flags.front();
         } else if (flag[0] == '-') {
-            fprintf(stderr, "Unrecognized argument: %s\n", flag.c_str());
+            if (rank == 0) {
+                fprintf(stderr, "Unrecognized argument: %s\n", flag.c_str());
+            }
             return 1;
         } else {
             args.push_back(flag);
@@ -112,13 +114,21 @@ int mpidag(int argc, char *argv[]) {
         errfile += ".mpidag.err";
     }
     
+    // Once we get here the different processes can diverge in their 
+    // behavior, so be careful how failures are handled after this 
+    // point and make sure MPI_Abort is called when something bad happens.
+    
+    char dotrank[25];
+    sprintf(dotrank, ".%d", rank);
+    
     FILE *log = NULL;
     log_set_level(loglevel);
     if (logfile.size() > 0) {
+        logfile += dotrank;
         log = fopen(logfile.c_str(), "w");
         if (log == NULL) {
-            fprintf(stderr, "Unable to open log file: %s: %s\n", logfile.c_str(), strerror(errno));
-            return 1;
+            failure("Unable to open log file: %s: %s\n", 
+                logfile.c_str(), strerror(errno));
         }
         log_set_file(log);
     }
@@ -127,13 +137,11 @@ int mpidag(int argc, char *argv[]) {
         if (rank == 0) {
             return Master(dagfile, outfile, errfile).run();
         } else {
-    
+            
             // Add rank to workers' out/err files
-            char dotrank[25];
-            sprintf(dotrank, ".%d", rank);
             outfile += dotrank;
             errfile += dotrank;
-    
+            
             return Worker(outfile, errfile).run();
         }
     } catch (...) {
