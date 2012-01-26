@@ -1,23 +1,85 @@
 This is a prototype workflow engine that runs as an MPI job.
 
-It has only been tested with Open MPI on my laptop.
+It has only been tested with Open MPI and MPICH2 on my laptop, and
+whatever MPI they have on Kraken at NICS.
 
 The workflows are simple DAGs described in a format similar to what Condor
 DAGMan uses. There are some examples in the test directory.
 
-To build it do:
+The rank 0 process becomes a master, and the rank 1..N processes become
+workers. The master process hands out the tasks to the workers in FCFS
+order, according to the dependencies specified in the DAG.
+
+Many HPC machines have very basic compute nodes that do not support
+common functionality found in desktop and server OSes. In order for 
+the workers to execute tasks they need to be able to call fork() and 
+exec(). If the system you are using does not support fork() and 
+exec() on the compute nodes, then this tool will not work.
+
+
+INSTALLING
+----------
+
+To build the code run:
 
 	$ make
 
-To run tests do:
+If the system you are on does not have an 'mpicxx' wrapper for the C++
+compiler then you will have to edit the makefile and change the CXX and CC
+variables to point at the right compiler.
+
+To run the tests do:
 
 	$ make test
+
+Finally, to install do:
+
+	$ make install
+
+By default it will install in $(HOME), otherwise you can do:
+
+	$ make PREFIX=/usr/local install
+
+USAGE
+-----
 
 To run a workflow do:
 
     $ mpirun -n 4 mpidag test/diamond.dag
 
-The scheduling is very basic round-robin, with no task prioritization.
+By default the stdout/stderr of jobs will be saved into files called 
+'DAGNAME.mpidag.out' and 'DAGNAME.mpidag.err', where DAGNAME is the path
+to the input DAG file. You can change this behavior with the -o and -e 
+arguments. Note that the stdio of all workers will be merged into one
+stdout and one stderr file at the end, so I/O from different workers
+will appear out of order in some cases.
 
-The stdout/stderr of jobs is not currently captured. It should be forwarded
-to the stdout/stderr of the master though.
+By default non-verbose logging information is generated. If you
+want to turn up the logging level add a '-v'. The more '-v's you add the
+more information you will get. Similarly, if you want to decrease the 
+logging level start adding '-q'.
+
+By default the log information is printed to stdout. If you turn up the
+logging then you may end up with a lot of stdout being forwarded from
+the workers to the master. To avoid that you can specify a log file using
+the -L argument. Note that if you use -L you will get N log files where 
+N = number of processes, and that these N log files will not be merged 
+into one at the end. Each process will add its rank to the end, so if you
+use '-L log/foo.log' you will get 'log/foo.log.0', 'log/foo.log.1' and so
+on.
+
+
+KNOWN ISSUES
+------------
+
+CPU Usage
+
+Many MPI implementations are optimized so that message sends and receives do
+not block. The reasoning is that blocking adds overhead and, since many HPC 
+systems use space sharing on dedicated hardware, there are no other processes
+competing, so spinning instead of blocking can produce better performance. On 
+those MPI implementations the master and worker processes will run at 100% CPU 
+usage even when they are waiting. If this is a problem on your system, then 
+there are some MPI implementations that *do* block on message send and receive. 
+On my laptop, for example, I use MPICH2 with the "ch3:sock" device instead of 
+the "ch3:nemesis" device to avoid this issue.
