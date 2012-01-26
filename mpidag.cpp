@@ -84,12 +84,12 @@ int mpidag(int argc, char *argv[]) {
     
     if (outfile.size() == 0) {
         outfile = dagfile;
-        outfile += ".out";
+        outfile += ".mpidag.out";
     }
     
     if (errfile.size() == 0) {
         errfile = dagfile;
-        errfile += ".err";
+        errfile += ".mpidag.err";
     }
     
     if (rank == 0) {
