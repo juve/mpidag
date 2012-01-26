@@ -5,6 +5,7 @@
 #include "master.h"
 #include "worker.h"
 #include "failure.h"
+#include "log.h"
 
 using namespace std;
 
@@ -17,9 +18,12 @@ void usage() {
             "Usage: %s [options] DAGFILE\n"
             "\n"
             "Options:\n"
-            "   -h|--help       Print this message\n"
-            "   -o|--stdout     Path to stdout file for tasks\n"
-            "   -e|--stderr     Path to stderr file for tasks\n",
+            "   -h|--help           Print this message\n"
+            "   -v|--verbose        Increase logging level\n"
+            "   -q|--quiet          Decrease logging level\n"
+            "   -L|--logfile PATH   Path to log file\n"
+            "   -o|--stdout PATH    Path to stdout file for tasks\n"
+            "   -e|--stderr PATH    Path to stderr file for tasks\n",
             program
         );
     }
@@ -43,7 +47,9 @@ int mpidag(int argc, char *argv[]) {
     
     string outfile;
     string errfile;
+    string logfile;
     list<string> args;
+    int loglevel = LOG_INFO;
     
     while (flags.size() > 0) {
         string flag = flags.front();
@@ -53,17 +59,31 @@ int mpidag(int argc, char *argv[]) {
         } else if (flag == "-o" || flag == "--stdout") {
             flags.pop_front();
             if (flags.size() == 0) {
-                argerror("-o/--stdout requires value");
+                argerror("-o/--stdout requires PATH");
                 return 1;
             }
             outfile = flags.front();
         } else if (flag == "-e" || flag == "--stderr") {
             flags.pop_front();
             if (flags.size() == 0) {
-                argerror("-e/--stderr requires value");
+                argerror("-e/--stderr requires PATH");
                 return 1;
             }
             errfile = flags.front();
+        } else if (flag == "-q" || flag == "--quiet") {
+            loglevel -= 1;
+        } else if (flag == "-v" || flag == "--verbose") {
+            loglevel += 1;
+        } else if (flag == "-L" || flag == "--logfile") {
+            flags.pop_front();
+            if (flags.size() == 0) {
+                argerror("-L/--logfile requires PATH");
+                return 1;
+            }
+            logfile = flags.front();
+        } else if (flag[0] == '-') {
+            fprintf(stderr, "Unrecognized argument: %s\n", flag.c_str());
+            return 1;
         } else {
             args.push_back(flag);
         }
@@ -92,17 +112,41 @@ int mpidag(int argc, char *argv[]) {
         errfile += ".mpidag.err";
     }
     
-    if (rank == 0) {
-        return Master(dagfile, outfile, errfile).run();
+    FILE *log = NULL;
+    log_set_level(loglevel);
+    if (logfile.size() > 0) {
+        log = fopen(logfile.c_str(), "w");
+        if (log == NULL) {
+            fprintf(stderr, "Unable to open log file: %s: %s\n", logfile.c_str(), strerror(errno));
+            return 1;
+        }
+        log_set_file(log);
     }
     
-    // Add rank to workers' out/err files
-    char dotrank[25];
-    sprintf(dotrank, ".%d", rank);
-    outfile += dotrank;
-    errfile += dotrank;
+    try {
+        if (rank == 0) {
+            return Master(dagfile, outfile, errfile).run();
+        } else {
     
-    return Worker(outfile, errfile).run();
+            // Add rank to workers' out/err files
+            char dotrank[25];
+            sprintf(dotrank, ".%d", rank);
+            outfile += dotrank;
+            errfile += dotrank;
+    
+            return Worker(outfile, errfile).run();
+        }
+    } catch (...) {
+        // Make sure we close the log
+        if (log != NULL) {
+            fclose(log);
+        }
+        throw;
+    }
+    
+    if (log != NULL) {
+        fclose(log);
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -112,7 +156,7 @@ int main(int argc, char *argv[]) {
         MPI_Finalize();
         return rc;
     } catch (exception &error) {
-        fprintf(stderr, "Error: %s\n", error.what());
+        fprintf(stderr, "FATAL: %s\n", error.what());
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 }

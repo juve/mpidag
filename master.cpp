@@ -4,6 +4,7 @@
 #include "master.h"
 #include "failure.h"
 #include "protocol.h"
+#include "log.h"
 
 Master::Master(const string &dagfile, const string &outfile, const string &errfile) {
     this->dagfile = dagfile;
@@ -15,24 +16,31 @@ Master::Master(const string &dagfile, const string &outfile, const string &errfi
 Master::~Master() {
 }
 
-void Master::submit_task(Task *t, int worker) {
-    send_request(t->name, t->command, worker);
+void Master::submit_task(Task *task, int worker) {
+    log_debug("Submitting task %s to worker %d", task->name.c_str(), worker);
+    send_request(task->name, task->command, worker);
 }
 
 void Master::wait_for_result() {
+    log_trace("Waiting for task to finish");
+    
     string name;
     int exitcode;
     int worker;
     recv_response(name, exitcode, worker);
     
     // Mark worker idle
+    log_trace("Worker %d is idle", worker);
     this->mark_worker_idle(worker);
     
     // Mark task finished
+    if (exitcode == 0) {
+        log_debug("Task %s finished with exitcode %d", name.c_str(), exitcode);
+    } else {
+        log_error("Task %s failed with exitcode %d", name.c_str(), exitcode);
+    }
     Task *t = this->dag.get_task(name);
     this->dag.mark_task_finished(t, exitcode);
-    
-    printf("Task %s finished with exitcode %d\n", name.c_str(), exitcode);
 }
 
 void Master::add_worker(int worker) {
@@ -57,6 +65,8 @@ void Master::mark_worker_idle(int worker) {
 }
 
 void Master::merge_task_stdio(FILE *dest, const string &srcfile, const string &stream) {
+    log_trace("Merging %s file: %s", stream.c_str(), srcfile.c_str());
+    
     FILE *src = fopen(srcfile.c_str(), "r");
     if (src == NULL) {
         failures("Unable to open task %s file: %s", stream.c_str(), srcfile.c_str());
@@ -85,11 +95,6 @@ void Master::merge_task_stdio(FILE *dest, const string &srcfile, const string &s
 }
 
 int Master::run() {
-    struct timeval start;
-    gettimeofday(&start, NULL);
-    
-    printf("Master starting...\n");
-    
     int numprocs;
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     
@@ -98,11 +103,15 @@ int Master::run() {
         failure("Need at least 1 worker");
     }
     
-    printf("Managing %d workers\n", numworkers);
+    log_info("Master starting with %d workers", numworkers);
     
     for (int i=1; i<=numworkers; i++) {
         this->add_worker(i);
     }
+    
+    // Start time of workflow
+    struct timeval start;
+    gettimeofday(&start, NULL);
     
     // While DAG has tasks to run
     while (!this->dag.is_finished()) {
@@ -111,46 +120,45 @@ int Master::run() {
         while (this->dag.has_ready_task() && this->has_idle_worker()) {
             int worker = this->next_idle_worker();
             Task *task = this->dag.next_ready_task();
-            /* DEBUG
-            printf("Submitting '%s' to worker %d\n", task->name.c_str(), worker);
-            */
             this->submit_task(task, worker);
         }
         
-        /* DEBUG Verbosity
         if (!this->dag.has_ready_task()) {
-            printf("No ready tasks\n");
+            log_debug("No ready tasks");
         }
         
         if (!this->has_idle_worker()) {
-            printf("No idle workers\n");
+            log_debug("No idle workers");
         }
-        */
         
         this->wait_for_result();
     }
     
+    // Finish time of workflow
     struct timeval finish;
     gettimeofday(&finish, NULL);
     
     // Tell workers to exit
     // TODO Change this to MPI_Bcast
+    log_trace("Sending workers shutdown messages");
     for (int i=1; i<=numworkers; i++) {
         send_shutdown(i);
     }
     
     // Wait until all workers exit
     // TODO Change this to an MPI_Recv loop
+    log_trace("Waiting for workers to finish");
     MPI_Barrier(MPI_COMM_WORLD);
     
     // Merge stdout/stderr from all tasks
+    log_trace("Merging stdio from workers");
     FILE *outf = fopen(this->outfile.c_str(), "w");
     if (outf == NULL) {
-        failures("Unable to open task stdout\n");
+        failures("Unable to open stdout file: %s\n", this->outfile.c_str());
     }
     FILE *errf = fopen(this->errfile.c_str(), "w");
     if (errf == NULL) {
-        failures("Unable to open task stderr\n");
+        failures("Unable to open stderr file: %s\n", this->outfile.c_str());
     }
     
     // Collect all stdout/stderr
@@ -172,14 +180,13 @@ int Master::run() {
     
     double stime = start.tv_sec + (start.tv_usec/1000000.0);
     double ftime = finish.tv_sec + (finish.tv_usec/1000000.0);
-    
-    printf("Wall time: %lf seconds\n", (ftime-stime));
+    log_info("Wall time: %lf seconds", (ftime-stime));
     
     if (this->dag.is_failed()) {
-        printf("Workflow failed\n");
+        log_error("Workflow failed");
         return 1;
     } else {
-        printf("Workflow finished successfully\n");
+        log_info("Workflow finished successfully");
         return 0;
     }
 }
