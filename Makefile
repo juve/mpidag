@@ -1,4 +1,4 @@
-include Makefile.mpich2
+include mpich2.mk
 
 SOURCES = $(shell ls *.cpp)
 TARGETS = mpidag
@@ -28,9 +28,9 @@ test: $(TESTS)
 clean:
 	rm -f mpidag.o $(OBJECTS) $(TEST_OBJECTS) $(TARGETS) $(TESTS)
 
-depends: Makefile.d
+depends: depends.mk
 
-Makefile.d:
-	g++ -MM $(SOURCES) > Makefile.d
+depends.mk:
+	g++ -MM $(SOURCES) > depends.mk
 
-include Makefile.d
+include depends.mk
