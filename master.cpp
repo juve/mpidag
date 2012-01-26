@@ -1,4 +1,5 @@
 #include <cstdio>
+#include "sys/time.h"
 #include "mpi.h"
 #include "master.h"
 #include "failure.h"
@@ -84,6 +85,9 @@ void Master::merge_task_stdio(FILE *dest, const string &srcfile, const string &s
 }
 
 int Master::run() {
+    struct timeval start;
+    gettimeofday(&start, NULL);
+    
     printf("Master starting...\n");
     
     int numprocs;
@@ -126,6 +130,9 @@ int Master::run() {
         this->wait_for_result();
     }
     
+    struct timeval finish;
+    gettimeofday(&finish, NULL);
+    
     // Tell workers to exit
     // TODO Change this to MPI_Bcast
     for (int i=1; i<=numworkers; i++) {
@@ -162,6 +169,11 @@ int Master::run() {
     
     fclose(errf);
     fclose(outf);
+    
+    double stime = start.tv_sec + (start.tv_usec/1000000.0);
+    double ftime = finish.tv_sec + (finish.tv_usec/1000000.0);
+    
+    printf("Wall time: %lf seconds\n", (ftime-stime));
     
     if (this->dag.is_failed()) {
         printf("Workflow failed\n");
