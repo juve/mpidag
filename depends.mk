@@ -6,4 +6,4 @@ protocol.o: protocol.cpp protocol.h
 strlib.o: strlib.cpp strlib.h
 test-dag.o: test-dag.cpp dag.h failure.h
 test-strlib.o: test-strlib.cpp strlib.h failure.h
-worker.o: worker.cpp worker.h protocol.h strlib.h
+worker.o: worker.cpp strlib.h worker.h protocol.h

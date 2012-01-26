@@ -1,24 +1,31 @@
-#include <cstdio>
-#include "mpi.h"
-#include "worker.h"
-#include "protocol.h"
 #include "strlib.h"
 #include "unistd.h"
+#include "stdio.h"
 #include "sys/wait.h"
+#include "mpi.h"
+#include "fcntl.h"
+#include "worker.h"
+#include "protocol.h"
 
 extern char **environ;
 
-Worker::Worker() {
+Worker::Worker(const string &outfile, const string &errfile) {
+    this->outfile = outfile;
+    this->errfile = errfile;
 }
 
 Worker::~Worker() {
 }
 
-void Worker::run() {
+int Worker::run() {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
-    printf("Worker %d starting...\n", rank);
+    printf("Worker %d: Starting...\n", rank);
+    
+    // Truncate the stdout/stderr files
+    truncate(outfile.c_str(), 0);
+    truncate(errfile.c_str(), 0);
     
     while (1) {
         string name;
@@ -30,7 +37,7 @@ void Worker::run() {
             break;
         }
         
-        printf("Running task %s on worker %d\n", name.c_str(), rank);
+        printf("Worker %d: Running task %s\n", rank, name.c_str());
         
         pid_t pid = fork();
         if (pid == 0) {
@@ -44,6 +51,19 @@ void Worker::run() {
             }
             argv[args.size()] = NULL; // Last one is null
             
+            int out = open(outfile.c_str(), O_WRONLY|O_CREAT|O_APPEND, 0000644);
+            int err = open(errfile.c_str(), O_WRONLY|O_CREAT|O_APPEND, 0000644);
+            
+            // Redirect stdout/stderr
+            close(STDOUT_FILENO);
+            dup2(out, STDOUT_FILENO);
+            
+            close(STDERR_FILENO);
+            dup2(err, STDERR_FILENO);
+            
+            close(out);
+            close(err);
+            
             // Exec process
             execve(argv[0], argv, environ);
             perror("execve");
@@ -52,19 +72,19 @@ void Worker::run() {
         
         // Wait for task to complete
         struct rusage usage;
-        int exitcode;
+        int exitcode = 1;
         if (wait4(pid, &exitcode, 0, &usage) == -1) {
-            perror("Child failed");
+            perror("Failed waiting for task");
         }
-        
-        // Free arguments
-        /*
-        for (unsigned i=0; i<args.size(); i++) {
-            free(argv[i]);
-        }
-        free(argv);
-        */
         
         send_response(name, exitcode);
     }
+    
+    // Signal master
+    // TODO Change this to an MPI_Send
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    printf("Worker %d: Exiting...\n", rank);
+    
+    return 0;
 }

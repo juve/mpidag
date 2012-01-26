@@ -41,9 +41,7 @@ install:
 clean:
 	$(RM) *.o $(PROGRAMS) $(TESTS)
 
-depends: depends.mk
-
-depends.mk:
+depends:
 	g++ -MM *.cpp > depends.mk
 
 include depends.mk

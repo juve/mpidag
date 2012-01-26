@@ -4,8 +4,10 @@
 #include "failure.h"
 #include "protocol.h"
 
-Master::Master(const string &dagfile) {
+Master::Master(const string &dagfile, const string &outfile, const string &errfile) {
     this->dagfile = dagfile;
+    this->outfile = outfile;
+    this->errfile = errfile;
     this->dag.read(dagfile);
 }
 
@@ -53,6 +55,34 @@ void Master::mark_worker_idle(int worker) {
     this->idle.push(worker);
 }
 
+void Master::merge_task_stdio(FILE *dest, const string &srcfile, const string &stream) {
+    FILE *src = fopen(srcfile.c_str(), "r");
+    if (src == NULL) {
+        failures("Unable to open task %s file: %s", stream.c_str(), srcfile.c_str());
+    }
+    
+    char buf[BUFSIZ];
+    while (1) {
+        int r = fread(buf, 1, BUFSIZ, src);
+        if (r < 0) {
+            failures("Error reading source file: %s", srcfile.c_str());
+        }
+        if (r == 0) {
+            break;
+        }
+        int w = fwrite(buf, 1, r, dest);
+        if (w < r) {
+            failures("Error writing to dest file");
+        }
+    }
+    
+    fclose(src);
+    
+    if (unlink(srcfile.c_str())) {
+        failures("Unable to delete task %s file: %s", stream.c_str(), srcfile.c_str());
+    }
+}
+
 int Master::run() {
     printf("Master starting...\n");
     
@@ -77,10 +107,13 @@ int Master::run() {
         while (this->dag.has_ready_task() && this->has_idle_worker()) {
             int worker = this->next_idle_worker();
             Task *task = this->dag.next_ready_task();
+            /* DEBUG
             printf("Submitting '%s' to worker %d\n", task->name.c_str(), worker);
+            */
             this->submit_task(task, worker);
         }
         
+        /* DEBUG Verbosity
         if (!this->dag.has_ready_task()) {
             printf("No ready tasks\n");
         }
@@ -88,19 +121,53 @@ int Master::run() {
         if (!this->has_idle_worker()) {
             printf("No idle workers\n");
         }
+        */
         
         this->wait_for_result();
     }
     
-    printf("Workflow finished\n");
-    
+    // Tell workers to exit
+    // TODO Change this to MPI_Bcast
     for (int i=1; i<=numworkers; i++) {
         send_shutdown(i);
     }
     
+    // Wait until all workers exit
+    // TODO Change this to an MPI_Recv loop
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    // Merge stdout/stderr from all tasks
+    FILE *outf = fopen(this->outfile.c_str(), "w");
+    if (outf == NULL) {
+        failures("Unable to open task stdout\n");
+    }
+    FILE *errf = fopen(this->errfile.c_str(), "w");
+    if (errf == NULL) {
+        failures("Unable to open task stderr\n");
+    }
+    
+    // Collect all stdout/stderr
+    char dotrank[25];
+    for (int i=1; i<=numworkers; i++) {
+        sprintf(dotrank, ".%d", i);
+        
+        string toutfile = this->outfile;
+        toutfile += dotrank;
+        this->merge_task_stdio(outf, toutfile, "stdout");
+        
+        string terrfile = this->errfile;
+        terrfile += dotrank;
+        this->merge_task_stdio(errf, terrfile, "stderr");
+    }
+    
+    fclose(errf);
+    fclose(outf);
+    
     if (this->dag.is_failed()) {
+        printf("Workflow failed\n");
         return 1;
     } else {
+        printf("Workflow finished successfully\n");
         return 0;
     }
 }
