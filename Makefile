@@ -1,6 +1,5 @@
-CXX = mpic++
-CFLAGS = $(shell mpic++ -g -Wall --showme:compile)
-LDFLAGS = $(shell mpic++ --showme:link)
+include Makefile.mpich2
+
 SOURCES = $(shell ls *.cpp)
 TARGETS = mpidag
 TESTS = $(shell ls test-*.cpp | sed 's/.cpp$$//')
@@ -12,22 +11,22 @@ TEST_OBJECTS = $(shell ls test-*.cpp | sed 's/.cpp$$/.o/')
 all: $(TARGETS)
 
 mpidag: mpidag.o $(OBJECTS)
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(LD) $(LDFLAGS) $^ -o $@
 
 test-strlib: test-strlib.o $(OBJECTS)
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(LD) $(LDFLAGS) $^ -o $@
 
 test-dag: test-dag.o $(OBJECTS)
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(LD) $(LDFLAGS) $^ -o $@
 
 .cpp.o:
-	$(CXX) -c $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 test: $(TESTS)
 	for test in $^; do echo $$test; ./$$test; done
 
 clean:
-	rm -f mpidag.o $(OBJECTS) $(TEST_OBJECTS) $(TARGETS) $(TESTS) Makefile.d
+	rm -f mpidag.o $(OBJECTS) $(TEST_OBJECTS) $(TARGETS) $(TESTS)
 
 depends: Makefile.d
 

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdio.h>
 #include "mpi.h"
 #include "master.h"
