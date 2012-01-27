@@ -24,7 +24,7 @@ void usage() {
             "   -L|--logfile PATH   Path to log file\n"
             "   -o|--stdout PATH    Path to stdout file for tasks\n"
             "   -e|--stderr PATH    Path to stderr file for tasks\n"
-            "   -r|--no-rescue      Ignore rescue file (still creates one)\n",
+            "   -s|--skip-rescue    Ignore existing rescue file (still creates one)\n",
             program
         );
     }
@@ -81,7 +81,7 @@ int mpidag(int argc, char *argv[]) {
     string logfile;
     list<string> args;
     int loglevel = LOG_INFO;
-    bool norescue = false;
+    bool skiprescue = false;
     
     while (flags.size() > 0) {
         string flag = flags.front();
@@ -119,8 +119,8 @@ int mpidag(int argc, char *argv[]) {
                 return 1;
             }
             logfile = flags.front();
-        } else if (flag == "-r" || flag == "--no-rescue") {
-            norescue = true;
+        } else if (flag == "-s" || flag == "--skip-rescue") {
+            skiprescue = true;
         } else if (flag[0] == '-') {
             if (rank == 0) {
                 fprintf(stderr, "Unrecognized argument: %s\n", flag.c_str());
@@ -204,7 +204,7 @@ int mpidag(int argc, char *argv[]) {
             string oldrescue;
             string newrescue = rescuebase;
             int next = next_retry_file(newrescue);
-            if (next == 0 || norescue) {
+            if (next == 0 || skiprescue) {
                 // Either there is no old rescue file, or the
                 // user doesnt want to read it.
                 oldrescue = "";
