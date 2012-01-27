@@ -24,16 +24,9 @@ void usage() {
             "   -L|--logfile PATH   Path to log file\n"
             "   -o|--stdout PATH    Path to stdout file for tasks\n"
             "   -e|--stderr PATH    Path to stderr file for tasks\n"
-            "   -r|--norescue       Ignore rescue file (still creates one)\n",
+            "   -r|--no-rescue      Ignore rescue file (still creates one)\n",
             program
         );
-    }
-}
-
-void argerror(const string &message) {
-    if (rank == 0) {
-        fprintf(stderr, "%s\n", message.c_str());
-        usage();
     }
 }
 
@@ -73,8 +66,10 @@ int next_retry_file(string &name) {
 }
 
 int mpidag(int argc, char *argv[]) {
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int numprocs;
     program = argv[0];
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     
     list<char *> flags;
     for (int i=1; i<argc; i++) {
@@ -96,14 +91,18 @@ int mpidag(int argc, char *argv[]) {
         } else if (flag == "-o" || flag == "--stdout") {
             flags.pop_front();
             if (flags.size() == 0) {
-                argerror("-o/--stdout requires PATH");
+                if (rank == 0) {
+                    fprintf(stderr, "-o/--stdout requires PATH\n");
+                }
                 return 1;
             }
             outfile = flags.front();
         } else if (flag == "-e" || flag == "--stderr") {
             flags.pop_front();
             if (flags.size() == 0) {
-                argerror("-e/--stderr requires PATH");
+                if (rank == 0) {
+                    fprintf(stderr, "-e/--stderr requires PATH\n");
+                }
                 return 1;
             }
             errfile = flags.front();
@@ -114,10 +113,14 @@ int mpidag(int argc, char *argv[]) {
         } else if (flag == "-L" || flag == "--logfile") {
             flags.pop_front();
             if (flags.size() == 0) {
-                argerror("-L/--logfile requires PATH");
+                if (rank == 0) {
+                    fprintf(stderr, "-L/--logfile requires PATH\n");
+                }
                 return 1;
             }
             logfile = flags.front();
+        } else if (flag == "-r" || flag == "--no-rescue") {
+            norescue = true;
         } else if (flag[0] == '-') {
             if (rank == 0) {
                 fprintf(stderr, "Unrecognized argument: %s\n", flag.c_str());
@@ -135,15 +138,22 @@ int mpidag(int argc, char *argv[]) {
     }
     
     if (args.size() > 1) {
-        argerror("Invalid argument");
+        fprintf(stderr, "Invalid argument\n");
         return 1;
     }
     
     string dagfile = args.front();
     
-    // Once we get here the different processes can diverge in their 
-    // behavior, so be careful how failures are handled after this 
-    // point and make sure MPI_Abort is called when something bad happens.
+    if (numprocs < 2) {
+        fprintf(stderr, "At least one worker process is required\n");
+        return 1;
+    }
+    
+    // Everything is pretty deterministic up until the processes reach
+    // this point. Once we get here the different processes can diverge 
+    // in their behavior for many reasons (file systems issues, bad nodes,
+    // etc.), so be careful how failures are handled after this point
+    // and make sure MPI_Abort is called when something bad happens.
     
     char dotrank[25];
     sprintf(dotrank, ".%d", rank);
@@ -163,13 +173,20 @@ int mpidag(int argc, char *argv[]) {
     try {
         if (rank == 0) {
             
+            // IMPORTANT: The rank 0 process figures out the names
+            // of these files so that we don't have 1000 workers all
+            // slamming the file system with stat() calls to check if
+            // the out/err/rescue files exist. The master will figure
+            // it out here, and then broadcast it to the workers when
+            // it starts up.
+            
             // Determine task stdout file
             if (outfile.size() == 0) {
                 outfile = dagfile;
                 outfile += ".out";
             }
             next_retry_file(outfile);
-            log_info("Using stdout file: %s", outfile.c_str());
+            log_debug("Using stdout file: %s", outfile.c_str());
             
             
             // Determine task stderr file
@@ -178,7 +195,7 @@ int mpidag(int argc, char *argv[]) {
                 errfile += ".err";
             }
             next_retry_file(errfile);
-            log_info("Using stderr file: %s", errfile.c_str());
+            log_debug("Using stderr file: %s", errfile.c_str());
             
             
             // Determine old and new rescue files
@@ -187,7 +204,9 @@ int mpidag(int argc, char *argv[]) {
             string oldrescue;
             string newrescue = rescuebase;
             int next = next_retry_file(newrescue);
-            if (next == 0) {
+            if (next == 0 || norescue) {
+                // Either there is no old rescue file, or the
+                // user doesnt want to read it.
                 oldrescue = "";
             } else {
                 char rbuf[5];
@@ -195,26 +214,12 @@ int mpidag(int argc, char *argv[]) {
                 oldrescue = rescuebase;
                 oldrescue += rbuf;
             }
-            log_info("Using old rescue file: %s", oldrescue.c_str());
-            log_info("Using new rescue file: %s", newrescue.c_str());
+            log_debug("Using old rescue file: %s", oldrescue.c_str());
+            log_debug("Using new rescue file: %s", newrescue.c_str());
             
-            DAG *dag = NULL;
-            int rc = 1;
-            try {
-                if (norescue) {
-                    dag = new DAG(dagfile, "", newrescue);
-                } else {
-                    dag = new DAG(dagfile, oldrescue, newrescue);
-                }
-                rc = Master(dag, outfile, errfile).run();
-                delete dag;
-                dag = NULL;
-            } catch(...) {
-                if (dag != NULL) {
-                    delete dag;
-                }
-            }
-            return rc;
+            DAG dag(dagfile, oldrescue, newrescue);
+            
+            return Master(&dag, outfile, errfile).run();
         } else {
             return Worker().run();
         }
@@ -238,7 +243,10 @@ int main(int argc, char *argv[]) {
         MPI_Finalize();
         return rc;
     } catch (exception &error) {
-        fprintf(stderr, "FATAL: %s\n", error.what());
+        // If we catch an execption here, then one of the
+        // processes has hit an unsolvable problem and we
+        // need to abort the entire workflow.
+        fprintf(stderr, "ABORT: %s\n", error.what());
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 }

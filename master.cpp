@@ -69,7 +69,13 @@ void Master::merge_task_stdio(FILE *dest, const string &srcfile, const string &s
     
     FILE *src = fopen(srcfile.c_str(), "r");
     if (src == NULL) {
-        failures("Unable to open task %s file: %s", stream.c_str(), srcfile.c_str());
+        // The file may not exist if the worker didn't run any tasks, just print a warning
+        if (errno == ENOENT) {
+            log_warn("No %s file: %s", stream.c_str(), srcfile.c_str());
+            return;
+        } else {
+            failures("Unable to open task %s file: %s", stream.c_str(), srcfile.c_str());
+        }
     }
     
     char buf[BUFSIZ];
