@@ -23,7 +23,8 @@ void usage() {
             "   -q|--quiet          Decrease logging level\n"
             "   -L|--logfile PATH   Path to log file\n"
             "   -o|--stdout PATH    Path to stdout file for tasks\n"
-            "   -e|--stderr PATH    Path to stderr file for tasks\n",
+            "   -e|--stderr PATH    Path to stderr file for tasks\n"
+            "   -r|--norescue       Ignore rescue file (still creates one)\n",
             program
         );
     }
@@ -34,6 +35,41 @@ void argerror(const string &message) {
         fprintf(stderr, "%s\n", message.c_str());
         usage();
     }
+}
+
+bool file_exists(const string &filename) {
+    int readok = access(filename.c_str(), R_OK);
+    if (readok == 0) {
+        return true;
+    } else {
+        if (errno == ENOENT) {
+            // File does not exist
+            return false;
+        } else {
+            // It exists, but we can't access it
+            failures("Error accessing file %s", filename.c_str());
+        }
+    }
+    
+    failure("Unreachable");
+}
+
+int next_retry_file(string &name) {
+    string base = name;
+    int i;
+    for (i=0; i<=100; i++) {
+        char rbuf[5];
+        snprintf(rbuf, 5, ".%03d", i);
+        name = base;
+        name += rbuf;
+        if (!file_exists(name)) {
+            break;
+        }
+    }
+    if (i >= 100) {
+        failure("Too many retry files: %s", name.c_str());
+    }
+    return i;
 }
 
 int mpidag(int argc, char *argv[]) {
@@ -50,6 +86,7 @@ int mpidag(int argc, char *argv[]) {
     string logfile;
     list<string> args;
     int loglevel = LOG_INFO;
+    bool norescue = false;
     
     while (flags.size() > 0) {
         string flag = flags.front();
@@ -104,16 +141,6 @@ int mpidag(int argc, char *argv[]) {
     
     string dagfile = args.front();
     
-    if (outfile.size() == 0) {
-        outfile = dagfile;
-        outfile += ".mpidag.out";
-    }
-    
-    if (errfile.size() == 0) {
-        errfile = dagfile;
-        errfile += ".mpidag.err";
-    }
-    
     // Once we get here the different processes can diverge in their 
     // behavior, so be careful how failures are handled after this 
     // point and make sure MPI_Abort is called when something bad happens.
@@ -135,14 +162,61 @@ int mpidag(int argc, char *argv[]) {
     
     try {
         if (rank == 0) {
-            return Master(dagfile, outfile, errfile).run();
+            
+            // Determine task stdout file
+            if (outfile.size() == 0) {
+                outfile = dagfile;
+                outfile += ".out";
+            }
+            next_retry_file(outfile);
+            log_info("Using stdout file: %s", outfile.c_str());
+            
+            
+            // Determine task stderr file
+            if (errfile.size() == 0) {
+                errfile = dagfile;
+                errfile += ".err";
+            }
+            next_retry_file(errfile);
+            log_info("Using stderr file: %s", errfile.c_str());
+            
+            
+            // Determine old and new rescue files
+            string rescuebase = dagfile;
+            rescuebase += ".rescue";
+            string oldrescue;
+            string newrescue = rescuebase;
+            int next = next_retry_file(newrescue);
+            if (next == 0) {
+                oldrescue = "";
+            } else {
+                char rbuf[5];
+                snprintf(rbuf, 5, ".%03d", next-1);
+                oldrescue = rescuebase;
+                oldrescue += rbuf;
+            }
+            log_info("Using old rescue file: %s", oldrescue.c_str());
+            log_info("Using new rescue file: %s", newrescue.c_str());
+            
+            DAG *dag = NULL;
+            int rc = 1;
+            try {
+                if (norescue) {
+                    dag = new DAG(dagfile, "", newrescue);
+                } else {
+                    dag = new DAG(dagfile, oldrescue, newrescue);
+                }
+                rc = Master(dag, outfile, errfile).run();
+                delete dag;
+                dag = NULL;
+            } catch(...) {
+                if (dag != NULL) {
+                    delete dag;
+                }
+            }
+            return rc;
         } else {
-            
-            // Add rank to workers' out/err files
-            outfile += dotrank;
-            errfile += dotrank;
-            
-            return Worker(outfile, errfile).run();
+            return Worker().run();
         }
     } catch (...) {
         // Make sure we close the log

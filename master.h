@@ -8,7 +8,7 @@ class Master {
     string dagfile;
     string outfile;
     string errfile;
-    DAG dag;
+    DAG *dag;
     queue<int> idle;
     
     void submit_task(Task *t, int worker);
@@ -19,7 +19,7 @@ class Master {
     int next_idle_worker();
     void merge_task_stdio(FILE *dest, const string &src, const string &stream);
 public:
-    Master(const string &dagfile, const string &outfile, const string &errfile);
+    Master(DAG *dag, const string &outfile, const string &errfile);
     ~Master();
     int run();
 };

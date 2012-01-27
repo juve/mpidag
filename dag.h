@@ -16,31 +16,47 @@ public:
     vector<Task *> children;
     vector<Task *> parents;
     
-    bool success;
+    bool done;
     
     Task(const string &name, const string &command);
     ~Task();
+    
+    bool is_ready();
+    bool is_done();
 };
 
 class DAG {
     queue<Task *> ready;
     map<string, Task *> tasks;
     set<Task *> queue;
+    FILE *rescue;
+    
+    // DAG files
+    void read_dag(const string &filename);
+    void add_task(Task *task);
+    void add_edge(const string &parent, const string &child);
+    
+    // Rescue files
+    void read_rescue(const string &filename);
+    bool has_rescue();
+    void open_rescue(const string &filename);
+    void close_rescue();
+    void write_rescue(Task *task);
+    
+    void queue_ready_task(Task *t);
+    void init();
 public:
-    DAG();
+    DAG(const string &dagfile);
+    DAG(const string &dagfile, const string &oldrescue);
+    DAG(const string &dagfile, const string &oldrescue, const string &newrescue);
     ~DAG();
     bool has_task(const string &name) const;
     Task *get_task(const string &name) const;
-    void add_task(Task *task);
-    void add_edge(const string &parent, const string &child);
     void mark_task_finished(Task *t, int exitcode);
-    void queue_ready_task(Task *t);
     bool has_ready_task();
     Task *next_ready_task();
     bool is_finished();
     bool is_failed();
-    void read(const string &filename);
-    void write(const string &filename, bool rescue=true) const;
 };
 
 #endif /* DAG_H */

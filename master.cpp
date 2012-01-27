@@ -6,11 +6,11 @@
 #include "protocol.h"
 #include "log.h"
 
-Master::Master(const string &dagfile, const string &outfile, const string &errfile) {
+Master::Master(DAG *dag, const string &outfile, const string &errfile) {
     this->dagfile = dagfile;
     this->outfile = outfile;
     this->errfile = errfile;
-    this->dag.read(dagfile);
+    this->dag = dag;
 }
 
 Master::~Master() {
@@ -39,8 +39,8 @@ void Master::wait_for_result() {
     } else {
         log_error("Task %s failed with exitcode %d", name.c_str(), exitcode);
     }
-    Task *t = this->dag.get_task(name);
-    this->dag.mark_task_finished(t, exitcode);
+    Task *t = this->dag->get_task(name);
+    this->dag->mark_task_finished(t, exitcode);
 }
 
 void Master::add_worker(int worker) {
@@ -105,6 +105,10 @@ int Master::run() {
     
     log_info("Master starting with %d workers", numworkers);
     
+    // First, send out the paths to the outfile/errfile
+    send_stdio_paths(this->outfile, this->errfile);
+    
+    // Queue up the workers
     for (int i=1; i<=numworkers; i++) {
         this->add_worker(i);
     }
@@ -114,16 +118,16 @@ int Master::run() {
     gettimeofday(&start, NULL);
     
     // While DAG has tasks to run
-    while (!this->dag.is_finished()) {
+    while (!this->dag->is_finished()) {
         
         // Submit as many tasks as we can
-        while (this->dag.has_ready_task() && this->has_idle_worker()) {
+        while (this->dag->has_ready_task() && this->has_idle_worker()) {
             int worker = this->next_idle_worker();
-            Task *task = this->dag.next_ready_task();
+            Task *task = this->dag->next_ready_task();
             this->submit_task(task, worker);
         }
         
-        if (!this->dag.has_ready_task()) {
+        if (!this->dag->has_ready_task()) {
             log_debug("No ready tasks");
         }
         
@@ -133,6 +137,8 @@ int Master::run() {
         
         this->wait_for_result();
     }
+    
+    log_info("Workflow finished");
     
     // Finish time of workflow
     struct timeval finish;
@@ -182,11 +188,11 @@ int Master::run() {
     double ftime = finish.tv_sec + (finish.tv_usec/1000000.0);
     log_info("Wall time: %lf seconds", (ftime-stime));
     
-    if (this->dag.is_failed()) {
+    if (this->dag->is_failed()) {
         log_error("Workflow failed");
         return 1;
     } else {
-        log_info("Workflow finished successfully");
+        log_info("Workflow suceeded");
         return 0;
     }
 }

@@ -2,28 +2,88 @@
 #include <cstring>
 #include <map>
 #include <vector>
+#include "unistd.h"
 #include "dag.h"
 #include "failure.h"
 #include "strlib.h"
+#include "log.h"
 
 #define MAX_LINE 16384
 
 Task::Task(const string &name, const string &command) {
-    this->name = string(name);
-    this->command = string(command);
-    this->success = false;
+    this->name = name;
+    this->command = command;
+    this->done = false;
 }
 
 Task::~Task() {
 }
 
-DAG::DAG() {
+bool Task::is_done() {
+    return this->done;
+}
+
+bool Task::is_ready() {
+    // A task is ready when all its parents are done
+    if (this->parents.empty()) {
+        return true;
+    }
+    bool ready = true;
+    for (unsigned j=0; j<this->parents.size(); j++) {
+        Task *p = this->parents[j];
+        if (!p->done) {
+            ready = false;
+        }
+    }
+    return ready;
+}
+
+DAG::DAG(const string &dagfile) {
+    this->rescue = NULL;
+    this->read_dag(dagfile);
+    this->init();
+}
+
+DAG::DAG(const string &dagfile, const string &oldrescue) {
+    this->rescue = NULL;
+    this->read_dag(dagfile);
+    if (!oldrescue.empty()) {
+        this->read_rescue(oldrescue);
+    }
+    this->init();
+}
+
+DAG::DAG(const string &dagfile, const string &oldrescue, const string &newrescue) {
+    this->rescue = NULL;
+    this->read_dag(dagfile);
+    if (!oldrescue.empty()) {
+        this->read_rescue(oldrescue);
+    }
+    if (!newrescue.empty()) {
+        this->open_rescue(newrescue);
+    }
+    this->init();
 }
 
 DAG::~DAG() {
+    // Close rescue file
+    this->close_rescue();
+    
+    // Delete all tasks
     map<string, Task *>::iterator i;
     for (i = this->tasks.begin(); i != this->tasks.end(); i++) {
         delete (*i).second;
+    }
+}
+
+void DAG::init() {    
+    // Queue all tasks that are ready, but not done
+    map<string, Task *>::iterator i;
+    for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
+        Task *t = (*i).second;
+        if (t->is_ready() && !t->is_done()) {
+            this->queue_ready_task(t);
+        }
     }
 }
 
@@ -60,15 +120,13 @@ void DAG::add_edge(const string &parent, const string &child) {
     c->parents.push_back(p);
 }
 
-void DAG::read(const string &filename) {
+void DAG::read_dag(const string &filename) {
     const char *DELIM = " \t\n\r";
     
     FILE *dagfile = fopen(filename.c_str(), "r");
     if (dagfile == NULL) {
         failures("Unable to open DAG file: %s", filename.c_str());
     }
-    
-    vector<Task *> tasks;
     
     char line[MAX_LINE];
     while (fgets(line, MAX_LINE, dagfile) != NULL) {
@@ -105,8 +163,6 @@ void DAG::read(const string &filename) {
             Task *t = new Task(name, cmd);
             
             this->add_task(t);
-            
-            tasks.push_back(t);
         } else if (rec.find("EDGE", 0, 4) == 0) {
             
             vector<string> v;
@@ -122,24 +178,69 @@ void DAG::read(const string &filename) {
             
             this->add_edge(parent, child);
         } else {
-            failure("Invalid record type: %s", line);
+            failure("Invalid DAG record: %s", line);
         }
     }
     
     
     fclose(dagfile);
-    
-    // Now queue all root tasks
-    for (unsigned i = 0; i < tasks.size(); i++) {
-        Task *t = tasks[i];
-        if (t->parents.size() == 0) {
-            this->queue_ready_task(t);
-        }
-    }
 }
 
-void DAG::write(const string &filename, bool rescue) const {
-    failure("Not implemented");
+void DAG::read_rescue(const string &filename) {
+    
+    // Check if rescue file exists
+    if (access(filename.c_str(), R_OK)) {
+        if (errno == ENOENT) {
+            // File doesn't exist
+            return;
+        }
+        failures("Unable to read rescue file: %s", filename.c_str());
+    }
+    
+    FILE *rescuefile = fopen(filename.c_str(), "r");
+    if (rescuefile == NULL) {
+        failures("Unable to open rescue file: %s", filename.c_str());
+    }
+    
+    const char *DELIM = " \t\n\r";
+    char line[MAX_LINE];
+    while (fgets(line, MAX_LINE, rescuefile) != NULL) {
+        string rec(line);
+        trim(rec);
+        
+        // Blank lines
+        if (rec.length() == 0) {
+            continue;
+        }
+        
+        // Comments
+        if (rec[0] == '#') {
+            continue;
+        }
+        
+        if (rec.find("DONE", 0, 4) == 0) {
+            vector<string> v;
+            
+            split(v, rec, DELIM, 1);
+            
+            if (v.size() < 2) {
+                failure("Invalid DONE record: %s\n", line);
+            }
+            
+            string name = v[1];
+            
+            if (!this->has_task(name)) {
+                failure("Unknown task %s in rescue file", name.c_str());
+            }
+            
+            Task *task = this->get_task(name);
+            task->done = true;
+        } else {
+            failure("Invalid rescue record: %s", line);
+        }
+    }
+    
+    fclose(rescuefile);
 }
 
 void DAG::queue_ready_task(Task *t) {
@@ -147,10 +248,49 @@ void DAG::queue_ready_task(Task *t) {
     this->queue.insert(t);
 }
 
+void DAG::open_rescue(const string &filename) {
+    this->rescue = fopen(filename.c_str(), "a");
+    if (this->rescue == NULL) {
+        failure("Unable to open rescue file: %s", filename.c_str());
+    }
+    
+    // Mark done tasks as done in the new rescue file
+    map<string, Task *>::iterator i;
+    for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
+        Task *t = (*i).second;
+        if (t->is_done()) {
+            this->write_rescue(t);
+        }
+    }
+}
+
+bool DAG::has_rescue() {
+    return this->rescue != NULL;
+}
+
+void DAG::close_rescue() {
+    if (this->has_rescue()) {
+        fclose(this->rescue);
+        this->rescue = NULL;
+    }
+}
+
+void DAG::write_rescue(Task *task) {
+    if (this->has_rescue()) {
+        if (fprintf(this->rescue, "\nDONE %s", task->name.c_str()) < 0) {
+            log_error("Error writing to rescue file: %s", strerror(errno));
+        }
+        if (fflush(this->rescue)) {
+            log_error("Error flushing rescue file: %s", strerror(errno));
+        }
+    }
+}
+
 void DAG::mark_task_finished(Task *t, int exitcode) {
-    // Mark task
+    // Mark task as done
     if (exitcode == 0) {
-        t->success = true;
+        t->done = true;
+        this->write_rescue(t);
     }
     
     // Remove from the queue
@@ -159,16 +299,14 @@ void DAG::mark_task_finished(Task *t, int exitcode) {
     // Release ready children
     for (unsigned i=0; i<t->children.size(); i++) {
         Task *c = t->children[i];
-        bool ready = true;
-        for (unsigned j=0; j<c->parents.size(); j++) {
-            Task *p = c->parents[j];
-            if (!p->success) {
-                ready = false;
-            }
-        }
-        if (ready) {
+        if (c->is_ready()) {
             this->queue_ready_task(c);
         }
+    }
+    
+    // If we are finished, close rescue
+    if (this->is_finished()) {
+        this->close_rescue();
     }
 }
 
@@ -199,7 +337,7 @@ bool DAG::is_failed() {
     map<string, Task *>::iterator i;
     for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
         Task *t = (*i).second;
-        if (!t->success) {
+        if (!t->done) {
             success = false;
             break;
         }

@@ -11,9 +11,7 @@
 
 extern char **environ;
 
-Worker::Worker(const string &outfile, const string &errfile) {
-    this->outfile = outfile;
-    this->errfile = errfile;
+Worker::Worker() {
 }
 
 Worker::~Worker() {
@@ -24,6 +22,21 @@ int Worker::run() {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     log_info("Worker %d: Starting...", rank);
+    
+    string outfile;
+    string errfile;
+    
+    // Get outfile/errfile
+    recv_stdio_paths(outfile, errfile);
+    
+    // Append rank to outfile/errfile
+    char dotrank[10];
+    snprintf(dotrank, 10, ".%d", rank);
+    outfile += dotrank;
+    errfile += dotrank;
+    
+    log_debug("Worker %d: Using stdout file: %s", rank, outfile.c_str());
+    log_debug("Worker %d: Using stderr file: %s", rank, errfile.c_str());
     
     // Truncate the stdout/stderr files
     truncate(outfile.c_str(), 0);

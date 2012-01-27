@@ -35,7 +35,7 @@ test-log: test-log.o $(OBJS)
 test: $(TESTS)
 	for test in $^; do echo $$test; ./$$test; done
 
-.PHONY: clean depends
+.PHONY: clean depends test install
 
 install:
 	$(INSTALL) -d -m 755 $(BINDIR)
