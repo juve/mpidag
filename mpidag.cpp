@@ -85,7 +85,7 @@ int mpidag(int argc, char *argv[]) {
     int loglevel = LOG_INFO;
     bool skiprescue = false;
     int max_failures = 0;
-    int tries = 0;
+    int tries = 1;
     
     while (flags.size() > 0) {
         string flag = flags.front();
