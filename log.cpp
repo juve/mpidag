@@ -1,5 +1,7 @@
 #include "stdio.h"
 #include "log.h"
+#include "time.h"
+#include "sys/time.h"
 
 #define MAX_LOG_MESSAGE 8192
 
@@ -25,6 +27,16 @@ FILE *log_get_file() {
     return logfile;
 }
 
+static void timestr(char *dest) {
+    struct timeval tod;
+    gettimeofday(&tod, NULL);
+    struct tm *t = localtime(&(tod.tv_sec));
+    int ms = (int)(tod.tv_usec/1000.0);
+    sprintf(dest, "%02d/%02d/%04d %02d:%02d:%02d.%.3d", 
+        t->tm_mon+1, t->tm_mday, t->tm_year+1900, 
+        t->tm_hour, t->tm_min, t->tm_sec, ms);
+}
+
 void log_message(int level, const char *message, va_list args) {
     // Just in case...
     if (logfile == NULL || ferror(logfile) || ftell(logfile) < 0) {
@@ -33,7 +45,15 @@ void log_message(int level, const char *message, va_list args) {
     
     if (log_test(level)) {
         char logformat[MAX_LOG_MESSAGE];
-        snprintf(logformat, MAX_LOG_MESSAGE, "%s\n", message);
+        if (logfile == stdout) {
+            snprintf(logformat, MAX_LOG_MESSAGE, "%s\n", message);    
+        } else {
+            // If logging to a file, add the date
+            char ts[26];
+            timestr(ts);
+            snprintf(logformat, MAX_LOG_MESSAGE, "%s: %s\n", ts, message);
+        }
+        
         // If logging to stdio, send ERROR and FATAL to stderr, others to stdout
         if (logfile == stdout && level <= LOG_ERROR) {
             vfprintf(stderr, logformat, args);

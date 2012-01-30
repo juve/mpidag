@@ -28,6 +28,17 @@ int main(int argc, char *argv[]) {
     
     log_set_file(NULL);
     log_warn("OK");
+
+    /* Test the timestamp stuff
+    FILE *logf = fopen("/tmp/foo.log","w");
+    log_set_file(logf);
+
+    log_warn("OK");
+    log_warn("OK");
+    log_warn("OK AGAIN");
+
+    fclose(logf);
+    */
     
     return 0;
 }
