@@ -69,34 +69,41 @@ Options
 *-v*::
 *--verbose*::
     Increase logging verbosity. Adding multiple *-v* increases the
-    level more. (see <<LOGGING,*LOGGING*>>)
+    level more. The default log level is 'INFO'. (see <<LOGGING,
+    *LOGGING*>>)
 
 *-q*::
 *--quiet*::
     Decrease logging verbosity. Adding multiple *-q* decreases the
-    level more. (see <<LOGGING,*LOGGING*>>)
+    level more. The default log level is 'INFO'. (see <<LOGGING,
+    *LOGGING*>>)
 
 *-s*::
 *--skip-rescue*::
     Ignore the rescue file for 'workflow.dag' if it exists. Note that
     *mpidag* will still create a new rescue file for the current run.
+    The default behavior is to use the rescue file if one is found.
     (see <<RESCUE_FILES,*RESCUE FILES*>>)
 
 *-L* 'path'::
 *--logfile* 'path'::
-    Path to file for logging messages. (see <<LOGGING,*LOGGING*>>)
+    Path to file for logging messages. By default, error-type log messages
+    go to stderr, and info-type log messages go to stdout. (see <<LOGGING,
+    *LOGGING*>>)
 
 *-o* 'path'::
 *--stdout* 'path'::
     Path to file for task stdout. *mpidag* will append '.XXX' to path
     where 'XXX' is the retry number according to the retry numbering
-    scheme. (see <<TASK_STDIO,*TASK STDIO*>>)
+    scheme. The default is to use 'PATH.out.XXX' where 'PATH' is the 
+    path to the input DAG file. (see <<TASK_STDIO,*TASK STDIO*>>)
 
 *-e* 'path'::
 *--stderr* 'path'::
     Path to file for task stderr. *mpidag* will append '.XXX' to path
     where 'XXX' is the retry number according to the retry numbering
-    scheme. (see <<TASK_STDIO,*TASK STDIO*>>)
+    scheme. The default is to use 'PATH.err.XXX' where 'PATH' is the
+    path to the input DAG file. (see <<TASK_STDIO,*TASK STDIO*>>)
 
 *-m* 'N'::
 *--max-failures* 'N'::
@@ -196,15 +203,9 @@ process will append its rank to the log file name, so if you use:
 ------------
 you will get 'log/foo.log.0', 'log/foo.log.1', and so on.
 
-The log levels in order of severity are:
-------------
-    FATAL
-    ERROR
-    WARN
-    INFO
-    DEBUG
-    TRACE
-------------
+The log levels in order of severity are: FATAL, ERROR, WARN, INFO, DEBUG, 
+and TRACE.
+
 The default logging level is INFO. The logging levels can be
 increased/decreased with *-v* and *-q*.
 

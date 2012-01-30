@@ -85,7 +85,7 @@ lightweight and robust.</simpara>
 <listitem>
 <simpara>
     Increase logging verbosity. Adding multiple <emphasis role="strong">-v</emphasis> increases the
-    level more. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
+    level more. The default log level is <emphasis>INFO</emphasis>. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
 </simpara>
 </listitem>
 </varlistentry>
@@ -99,7 +99,7 @@ lightweight and robust.</simpara>
 <listitem>
 <simpara>
     Decrease logging verbosity. Adding multiple <emphasis role="strong">-q</emphasis> decreases the
-    level more. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
+    level more. The default log level is <emphasis>INFO</emphasis>. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
 </simpara>
 </listitem>
 </varlistentry>
@@ -114,6 +114,7 @@ lightweight and robust.</simpara>
 <simpara>
     Ignore the rescue file for <emphasis>workflow.dag</emphasis> if it exists. Note that
     <emphasis role="strong">mpidag</emphasis> will still create a new rescue file for the current run.
+    The default behavior is to use the rescue file if one is found.
     (see <link linkend="RESCUE_FILES"><emphasis role="strong">RESCUE FILES</emphasis></link>)
 </simpara>
 </listitem>
@@ -127,7 +128,8 @@ lightweight and robust.</simpara>
 </term>
 <listitem>
 <simpara>
-    Path to file for logging messages. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
+    Path to file for logging messages. By default, error-type log messages
+    go to stderr, and info-type log messages go to stdout. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
 </simpara>
 </listitem>
 </varlistentry>
@@ -142,7 +144,8 @@ lightweight and robust.</simpara>
 <simpara>
     Path to file for task stdout. <emphasis role="strong">mpidag</emphasis> will append <emphasis>.XXX</emphasis> to path
     where <emphasis>XXX</emphasis> is the retry number according to the retry numbering
-    scheme. (see <link linkend="TASK_STDIO"><emphasis role="strong">TASK STDIO</emphasis></link>)
+    scheme. The default is to use <emphasis>PATH.out.XXX</emphasis> where <emphasis>PATH</emphasis> is the
+    path to the input DAG file. (see <link linkend="TASK_STDIO"><emphasis role="strong">TASK STDIO</emphasis></link>)
 </simpara>
 </listitem>
 </varlistentry>
@@ -157,7 +160,8 @@ lightweight and robust.</simpara>
 <simpara>
     Path to file for task stderr. <emphasis role="strong">mpidag</emphasis> will append <emphasis>.XXX</emphasis> to path
     where <emphasis>XXX</emphasis> is the retry number according to the retry numbering
-    scheme. (see <link linkend="TASK_STDIO"><emphasis role="strong">TASK STDIO</emphasis></link>)
+    scheme. The default is to use <emphasis>PATH.err.XXX</emphasis> where <emphasis>PATH</emphasis> is the
+    path to the input DAG file. (see <link linkend="TASK_STDIO"><emphasis role="strong">TASK STDIO</emphasis></link>)
 </simpara>
 </listitem>
 </varlistentry>
@@ -251,13 +255,8 @@ and that these N log files will not be merged into one at the end. Each
 process will append its rank to the log file name, so if you use:</simpara>
 <screen>    -L log/foo.log</screen>
 <simpara>you will get <emphasis>log/foo.log.0</emphasis>, <emphasis>log/foo.log.1</emphasis>, and so on.</simpara>
-<simpara>The log levels in order of severity are:</simpara>
-<screen>    FATAL
-    ERROR
-    WARN
-    INFO
-    DEBUG
-    TRACE</screen>
+<simpara>The log levels in order of severity are: FATAL, ERROR, WARN, INFO, DEBUG,
+and TRACE.</simpara>
 <simpara>The default logging level is INFO. The logging levels can be
 increased/decreased with <emphasis role="strong">-v</emphasis> and <emphasis role="strong">-q</emphasis>.</simpara>
 </refsect1>

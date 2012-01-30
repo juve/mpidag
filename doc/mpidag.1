@@ -56,7 +56,8 @@ Print help message
 .RS 4
 Increase logging verbosity\&. Adding multiple
 \fB\-v\fR
-increases the level more\&. (see
+increases the level more\&. The default log level is
+\fIINFO\fR\&. (see
 \fBLOGGING\fR)
 .RE
 .PP
@@ -64,7 +65,8 @@ increases the level more\&. (see
 .RS 4
 Decrease logging verbosity\&. Adding multiple
 \fB\-q\fR
-decreases the level more\&. (see
+decreases the level more\&. The default log level is
+\fIINFO\fR\&. (see
 \fBLOGGING\fR)
 .RE
 .PP
@@ -74,13 +76,13 @@ Ignore the rescue file for
 \fIworkflow\&.dag\fR
 if it exists\&. Note that
 \fBmpidag\fR
-will still create a new rescue file for the current run\&. (see
+will still create a new rescue file for the current run\&. The default behavior is to use the rescue file if one is found\&. (see
 \fBRESCUE FILES\fR)
 .RE
 .PP
 \fB\-L\fR \fIpath\fR, \fB\-\-logfile\fR \fIpath\fR
 .RS 4
-Path to file for logging messages\&. (see
+Path to file for logging messages\&. By default, error\-type log messages go to stderr, and info\-type log messages go to stdout\&. (see
 \fBLOGGING\fR)
 .RE
 .PP
@@ -92,7 +94,11 @@ will append
 \fI\&.XXX\fR
 to path where
 \fIXXX\fR
-is the retry number according to the retry numbering scheme\&. (see
+is the retry number according to the retry numbering scheme\&. The default is to use
+\fIPATH\&.out\&.XXX\fR
+where
+\fIPATH\fR
+is the path to the input DAG file\&. (see
 \fBTASK STDIO\fR)
 .RE
 .PP
@@ -104,7 +110,11 @@ will append
 \fI\&.XXX\fR
 to path where
 \fIXXX\fR
-is the retry number according to the retry numbering scheme\&. (see
+is the retry number according to the retry numbering scheme\&. The default is to use
+\fIPATH\&.err\&.XXX\fR
+where
+\fIPATH\fR
+is the path to the input DAG file\&. (see
 \fBTASK STDIO\fR)
 .RE
 .PP
@@ -229,22 +239,7 @@ By default, all logging messages are printed to stdout\&. If you turn up the log
 .sp
 you will get \fIlog/foo\&.log\&.0\fR, \fIlog/foo\&.log\&.1\fR, and so on\&.
 .sp
-The log levels in order of severity are:
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-    FATAL
-    ERROR
-    WARN
-    INFO
-    DEBUG
-    TRACE
-.fi
-.if n \{\
-.RE
-.\}
+The log levels in order of severity are: FATAL, ERROR, WARN, INFO, DEBUG, and TRACE\&.
 .sp
 The default logging level is INFO\&. The logging levels can be increased/decreased with \fB\-v\fR and \fB\-q\fR\&.
 .SH "TASK STDIO"
