@@ -101,6 +101,10 @@ void Master::merge_task_stdio(FILE *dest, const string &srcfile, const string &s
 }
 
 int Master::run() {
+    // Start time of workflow
+    struct timeval start;
+    gettimeofday(&start, NULL);
+
     int numprocs;
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     
@@ -119,10 +123,6 @@ int Master::run() {
         this->add_worker(i);
     }
     
-    // Start time of workflow
-    struct timeval start;
-    gettimeofday(&start, NULL);
-
     // While DAG has tasks to run
     while (!this->dag->is_finished()) {
         
@@ -156,12 +156,27 @@ int Master::run() {
     for (int i=1; i<=numworkers; i++) {
         send_shutdown(i);
     }
-    
-    // Wait until all workers exit
-    // TODO Change this to an MPI_Recv loop
+
     log_trace("Waiting for workers to finish");
-    MPI_Barrier(MPI_COMM_WORLD);
-    
+
+    double my_runtime = 0.0;
+    double total_runtime = 0.0;
+    MPI_Reduce(&my_runtime, &total_runtime, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    log_info("Total runtime of tasks: %f", total_runtime);
+
+    double stime = start.tv_sec + (start.tv_usec/1000000.0);
+    double ftime = finish.tv_sec + (finish.tv_usec/1000000.0);
+    double walltime = ftime - stime;
+    log_info("Wall time: %lf seconds", walltime);
+
+    // Compute resource utilization
+    if (total_runtime > 0) {
+        double master_util = total_runtime / (walltime * numprocs);
+        double worker_util = total_runtime / (walltime * numworkers);
+        log_info("Resource utilization (with master): %lf", master_util);
+        log_info("Resource utilization (without master): %lf", worker_util);
+    }
+
     // Merge stdout/stderr from all tasks
     log_trace("Merging stdio from workers");
     FILE *outf = fopen(this->outfile.c_str(), "w");
@@ -190,9 +205,7 @@ int Master::run() {
     fclose(errf);
     fclose(outf);
     
-    double stime = start.tv_sec + (start.tv_usec/1000000.0);
-    double ftime = finish.tv_sec + (finish.tv_usec/1000000.0);
-    log_info("Wall time: %lf seconds", (ftime-stime));
+    
     
     if (this->dag->max_failures_reached()) {
         log_error("Max failures reached");

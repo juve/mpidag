@@ -5,6 +5,7 @@
 #include "sys/wait.h"
 #include "mpi.h"
 #include "fcntl.h"
+#include "sys/time.h"
 #include "worker.h"
 #include "protocol.h"
 #include "log.h"
@@ -42,6 +43,8 @@ int Worker::run() {
     truncate(outfile.c_str(), 0);
     truncate(errfile.c_str(), 0);
     
+    double total_runtime = 0.0;
+
     while (1) {
         string name;
         string command;
@@ -54,6 +57,9 @@ int Worker::run() {
         }
         
         log_debug("Worker %d: Running task %s", rank, name.c_str());
+
+        struct timeval task_start;
+        gettimeofday(&task_start, NULL);
         
         pid_t pid = fork();
         if (pid == 0) {
@@ -106,15 +112,24 @@ int Worker::run() {
             log_warn("Failed waiting for task: %s", strerror(errno));
         }
         
-        log_debug("Worker %d: Task %s finished with exitcode %d", rank, name.c_str(), exitcode);
+        struct timeval task_finish;
+        gettimeofday(&task_finish, NULL);
+
+        double task_stime = task_start.tv_sec + (task_start.tv_usec/1000000.0);
+        double task_ftime = task_finish.tv_sec + (task_finish.tv_usec/1000000.0);
+        double task_runtime = task_ftime - task_stime;
+
+        total_runtime += task_runtime;
+
+        log_debug("Worker %d: Task %s finished with exitcode %d in %f seconds", 
+            rank, name.c_str(), exitcode, task_runtime);
         
         send_response(name, exitcode);
     }
-    
-    // Signal master
-    // TODO Change this to an MPI_Send
-    log_trace("Worker %d: Sending shutdown message to master", rank);
-    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Send total_runtime
+    log_trace("Worker %d: Sending total runtime to master", rank);
+    MPI_Reduce(&total_runtime, NULL, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
     log_info("Worker %d: Exiting...", rank);
     
