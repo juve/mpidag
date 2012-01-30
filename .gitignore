@@ -1,5 +1,5 @@
 *.o
 mpidag
-test-dag
-test-strlib
-test-log
+test-*
+!test-*.cpp
+!test-*.h
