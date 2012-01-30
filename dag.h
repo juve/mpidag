@@ -30,6 +30,8 @@ class DAG {
     map<string, Task *> tasks;
     set<Task *> queue;
     FILE *rescue;
+    int failures;
+    int max_failures;
     
     // DAG files
     void read_dag(const string &filename);
@@ -48,8 +50,9 @@ class DAG {
 public:
     DAG(const string &dagfile);
     DAG(const string &dagfile, const string &oldrescue);
-    DAG(const string &dagfile, const string &oldrescue, const string &newrescue);
+    DAG(const string &dagfile, const string &oldrescue, const string &newrescue, int max_failures = 0);
     ~DAG();
+    bool max_failures_reached();
     bool has_task(const string &name) const;
     Task *get_task(const string &name) const;
     void mark_task_finished(Task *t, int exitcode);

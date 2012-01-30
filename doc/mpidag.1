@@ -107,6 +107,19 @@ to path where
 is the retry number according to the retry numbering scheme\&. (see
 \fBTASK STDIO\fR)
 .RE
+.PP
+\fB\-m\fR \fIN\fR, \fB\-\-max\-failures\fR \fIN\fR
+.RS 4
+Stop submitting new tasks after
+\fIN\fR
+tasks have failed\&. Once
+\fIN\fR
+has been reached,
+\fBmpidag\fR
+will finish running any tasks that have been started, but will not start any more tasks\&. This option is used to prevent
+\fBmpidag\fR
+from continuing to run a workflow that is suffering from a systematic error, such as a missing binary or an invalid path\&.
+.RE
 .SH "DAG FILES"
 .sp
 \fBmpidag\fR workflows are expressed using a simple text\-based format similar to that used by Condor DAGMan\&. There are only two record types allowed in a DAG file: \fBTASK\fR and \fBEDGE\fR\&. Any blank lines in the DAG (lines with all whitespace characters) are ignored, as are any lines beginning with # (note that # can only appear at the beginning of a line, not in the middle)\&.

@@ -98,6 +98,15 @@ Options
     where 'XXX' is the retry number according to the retry numbering
     scheme. (see <<TASK_STDIO,*TASK STDIO*>>)
 
+*-m* 'N'::
+*--max-failures* 'N'::
+    Stop submitting new tasks after 'N' tasks have failed. Once 'N' 
+    has been reached, *mpidag* will finish running any tasks that have
+    been started, but will not start any more tasks. This option is
+    used to prevent *mpidag* from continuing to run a workflow that 
+    is suffering from a systematic error, such as a missing binary or
+    an invalid path.
+
 
 [[DAG_FILES]]
 DAG Files

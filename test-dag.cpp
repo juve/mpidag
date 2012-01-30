@@ -230,10 +230,38 @@ void diamond_dag_rescue() {
     }
 }
 
+void diamond_dag_max_failures() {
+    DAG dag("test/diamond.dag", "", "", 1);
+    
+    if (!dag.has_ready_task()) {
+        failure("Did not queue root tasks");
+    }
+    
+    Task *a = dag.next_ready_task();
+    if (a->name.compare("A") != 0) {
+        failure("Queued non root task %s", a->name.c_str());
+    }
+    
+    if (dag.has_ready_task()) {
+        failure("Queued non-root tasks");
+    }
+    
+    dag.mark_task_finished(a, 0);
+
+    Task *bc = dag.next_ready_task();
+
+    dag.mark_task_finished(bc, 1);
+
+    if (dag.has_ready_task()) {
+        failure("DAG should not have a ready task because %s failed", bc->name.c_str());
+    }
+}
+
 int main(int argc, char *argv[]) {
     test_dag();
     diamond_dag();
     diamond_dag_failure();
+    diamond_dag_max_failures();
     diamond_dag_oldrescue();
     diamond_dag_newrescue();
     diamond_dag_rescue();

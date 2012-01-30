@@ -161,6 +161,24 @@ lightweight and robust.</simpara>
 </simpara>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term>
+<emphasis role="strong">-m</emphasis> <emphasis>N</emphasis>
+</term>
+<term>
+<emphasis role="strong">--max-failures</emphasis> <emphasis>N</emphasis>
+</term>
+<listitem>
+<simpara>
+    Stop submitting new tasks after <emphasis>N</emphasis> tasks have failed. Once <emphasis>N</emphasis>
+    has been reached, <emphasis role="strong">mpidag</emphasis> will finish running any tasks that have
+    been started, but will not start any more tasks. This option is
+    used to prevent <emphasis role="strong">mpidag</emphasis> from continuing to run a workflow that
+    is suffering from a systematic error, such as a missing binary or
+    an invalid path.
+</simpara>
+</listitem>
+</varlistentry>
 </variablelist>
 </refsect1>
 <refsect1 id="DAG_FILES">

@@ -18,13 +18,14 @@ void usage() {
             "Usage: %s [options] DAGFILE\n"
             "\n"
             "Options:\n"
-            "   -h|--help           Print this message\n"
-            "   -v|--verbose        Increase logging level\n"
-            "   -q|--quiet          Decrease logging level\n"
-            "   -L|--logfile PATH   Path to log file\n"
-            "   -o|--stdout PATH    Path to stdout file for tasks\n"
-            "   -e|--stderr PATH    Path to stderr file for tasks\n"
-            "   -s|--skip-rescue    Ignore existing rescue file (still creates one)\n",
+            "   -h|--help            Print this message\n"
+            "   -v|--verbose         Increase logging level\n"
+            "   -q|--quiet           Decrease logging level\n"
+            "   -L|--logfile PATH    Path to log file\n"
+            "   -o|--stdout PATH     Path to stdout file for tasks\n"
+            "   -e|--stderr PATH     Path to stderr file for tasks\n"
+            "   -s|--skip-rescue     Ignore existing rescue file (still creates one)\n"
+            "   -m|--max-failures N  Stop submitting tasks after N tasks have failed\n",
             program
         );
     }
@@ -82,6 +83,7 @@ int mpidag(int argc, char *argv[]) {
     list<string> args;
     int loglevel = LOG_INFO;
     bool skiprescue = false;
+    int max_failures = 0;
     
     while (flags.size() > 0) {
         string flag = flags.front();
@@ -121,6 +123,19 @@ int mpidag(int argc, char *argv[]) {
             logfile = flags.front();
         } else if (flag == "-s" || flag == "--skip-rescue") {
             skiprescue = true;
+        } else if (flag == "-m" || flag == "--max-failures") {
+            flags.pop_front();
+            if (flags.size() == 0) {
+                if (rank == 0) {
+                    fprintf(stderr, "-m/--max-failures requires N\n");
+                }
+                return 1;
+            }
+            string N = flags.front();
+            if (!sscanf(N.c_str(), "%d", &max_failures)) {
+                fprintf(stderr, "N for -m/--max-failures is invalid\n");
+                return 1;
+            }
         } else if (flag[0] == '-') {
             if (rank == 0) {
                 fprintf(stderr, "Unrecognized argument: %s\n", flag.c_str());
