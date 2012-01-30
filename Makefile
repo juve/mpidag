@@ -1,7 +1,9 @@
-ifndef PREFIX
-PREFIX = $(HOME)
+ifndef prefix
+prefix = $(HOME)
 endif
-BINDIR = $(PREFIX)/bin
+bindir = $(prefix)/bin
+mandir = $(prefix)/share/man
+man1dir = $(prefix)/share/man/man1
 
 CXX = mpicxx
 CC = mpicxx
@@ -9,6 +11,8 @@ CXXFLAGS = -g -Wall
 LDFLAGS = 
 RM = rm -f
 INSTALL = install
+MAKE = make
+
 
 OBJS += strlib.o
 OBJS += failure.o
@@ -35,11 +39,16 @@ test-log: test-log.o $(OBJS)
 test: $(TESTS)
 	for test in $^; do echo $$test; ./$$test; done
 
-.PHONY: clean depends test install
+.PHONY: clean depends test install manpages
 
-install:
-	$(INSTALL) -d -m 755 $(BINDIR)
-	$(INSTALL) $(PROGRAMS) $(BINDIR)
+manpages:
+	cd doc && $(MAKE) manpages
+
+install: manpages $(PROGRAMS)
+	$(INSTALL) -d -m 755 $(bindir)
+	$(INSTALL) -m 755 $(PROGRAMS) $(bindir)
+	$(INSTALL) -d -m 755 $(man1dir)
+	$(INSTALL) -m 644 doc/*.1 $(man1dir)
 
 clean:
 	$(RM) *.o $(PROGRAMS) $(TESTS)

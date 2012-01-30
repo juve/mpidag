@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+<refentry lang="en">
+<refentryinfo>
+    <title>mpidag(1)</title>
+</refentryinfo>
+<refmeta>
+<refentrytitle>mpidag</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">&#160;</refmiscinfo>
+<refmiscinfo class="manual">&#160;</refmiscinfo>
+</refmeta>
+<refnamediv>
+    <refname>mpidag</refname>
+    <refpurpose>a tool for running computational workflows expressed as DAGs (Directed Acyclic Graphs) on computational clusters using MPI.</refpurpose>
+</refnamediv>
+<refsynopsisdiv id="mpidag.txt_synopsis">
+<simpara><emphasis role="strong">mpidag</emphasis> [<emphasis role="strong">-h</emphasis>] [<emphasis role="strong">-v</emphasis>] [<emphasis role="strong">-q</emphasis>] [<emphasis role="strong">-s</emphasis>] [<emphasis role="strong">-L</emphasis> <emphasis>path</emphasis>] [<emphasis role="strong">-o</emphasis> <emphasis>path</emphasis>] [<emphasis role="strong">-e</emphasis> <emphasis>path</emphasis>] <emphasis>workflow.dag</emphasis></simpara>
+</refsynopsisdiv>
+<refsect1 id="mpidag.txt_description">
+<title>Description</title>
+<simpara><emphasis role="strong">mpidag</emphasis> is a tool used to run HTC (High Throughput Computing) scientific
+workflows on systems designed for HPC (High Performance Computing).
+Many HPC systems have custom architectures that are optimized for
+tightly-coupled, parallel applications. These systems commonly have
+exotic, low-latency networks that are designed for passing short
+messages very quickly between compute nodes. Many of these networks are so
+highly optimized that the compute nodes do not even support a TCP/IP
+stack. This makes it impossible to run HTC applications using software
+that was designed for commodity clusters, such as Condor.</simpara>
+<simpara><emphasis role="strong">mpidag</emphasis> was developed to enable loosely-coupled HTC applications such as
+scientific workflows to take advantage of HPC systems. In order to get
+around the network issues outlined above, <emphasis role="strong">mpidag</emphasis> uses MPI (Message
+Passing Interface), a commonly used API for writing SPMD (Single
+Process, Multiple Data) parallel applications. Most HPC systems have an
+MPI implementation that works on whatever exotic network architecture
+the system uses.</simpara>
+<simpara>An <emphasis role="strong">mpidag</emphasis> job consists of a single master process (this process is rank
+0 in MPI parlance) and several worker processes. The master process
+manages the workflow and assigns workflow tasks to workers for execution.
+The workers execute the tasks and return the results to the master. Any
+output written to stdout or stderr by the tasks is captured (see
+<link linkend="TASK_STDIO"><emphasis role="strong">TASK STDIO</emphasis></link>).</simpara>
+<simpara><emphasis role="strong">mpidag</emphasis> applications are expressed as DAGs (Directed Acyclic Graphs)
+(see <link linkend="DAG_FILES"><emphasis role="strong">DAG FILES</emphasis></link>). Each node in the graph represents a task,
+and the edges represent dependencies between the tasks that constrain the
+order in which the tasks are executed. Each task is a program and a set of
+parameters that need to be run (i.e. a command and some optional
+arguments). The dependencies typically represent data flow dependencies in
+the application, where the output files produced by one task are needed
+as inputs for another.</simpara>
+<simpara>If an error occurs while executing a DAG that causes the workflow to
+stop, it can be restarted using a rescue file, which records the
+progress of the workflow (see <link linkend="RESCUE_FILES"><emphasis role="strong">RESCUE FILES</emphasis></link>). This
+enables <emphasis role="strong">mpidag</emphasis> to pick up running the workflow where it stopped.</simpara>
+<simpara><emphasis role="strong">mpidag</emphasis> allows applications expressed as a DAG to be executed in
+parallel on a large number of compute nodes. It is designed to be simple,
+lightweight and robust.</simpara>
+</refsect1>
+<refsect1 id="mpidag.txt_options">
+<title>Options</title>
+<variablelist>
+<varlistentry>
+<term>
+<emphasis role="strong">-h</emphasis>
+</term>
+<term>
+<emphasis role="strong">--help</emphasis>
+</term>
+<listitem>
+<simpara>
+    Print help message
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<emphasis role="strong">-v</emphasis>
+</term>
+<term>
+<emphasis role="strong">--verbose</emphasis>
+</term>
+<listitem>
+<simpara>
+    Increase logging verbosity. Adding multiple <emphasis role="strong">-v</emphasis> increases the
+    level more. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<emphasis role="strong">-q</emphasis>
+</term>
+<term>
+<emphasis role="strong">--quiet</emphasis>
+</term>
+<listitem>
+<simpara>
+    Decrease logging verbosity. Adding multiple <emphasis role="strong">-q</emphasis> decreases the
+    level more. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<emphasis role="strong">-s</emphasis>
+</term>
+<term>
+<emphasis role="strong">--skip-rescue</emphasis>
+</term>
+<listitem>
+<simpara>
+    Ignore the rescue file for <emphasis>workflow.dag</emphasis> if it exists. Note that
+    <emphasis role="strong">mpidag</emphasis> will still create a new rescue file for the current run.
+    (see <link linkend="RESCUE_FILES"><emphasis role="strong">RESCUE FILES</emphasis></link>)
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<emphasis role="strong">-L</emphasis> <emphasis>path</emphasis>
+</term>
+<term>
+<emphasis role="strong">--logfile</emphasis> <emphasis>path</emphasis>
+</term>
+<listitem>
+<simpara>
+    Path to file for logging messages. (see <link linkend="LOGGING"><emphasis role="strong">LOGGING</emphasis></link>)
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<emphasis role="strong">-o</emphasis> <emphasis>path</emphasis>
+</term>
+<term>
+<emphasis role="strong">--stdout</emphasis> <emphasis>path</emphasis>
+</term>
+<listitem>
+<simpara>
+    Path to file for task stdout. <emphasis role="strong">mpidag</emphasis> will append <emphasis>.XXX</emphasis> to path
+    where <emphasis>XXX</emphasis> is the retry number according to the retry numbering
+    scheme. (see <link linkend="TASK_STDIO"><emphasis role="strong">TASK STDIO</emphasis></link>)
+</simpara>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<emphasis role="strong">-e</emphasis> <emphasis>path</emphasis>
+</term>
+<term>
+<emphasis role="strong">--stderr</emphasis> <emphasis>path</emphasis>
+</term>
+<listitem>
+<simpara>
+    Path to file for task stderr. <emphasis role="strong">mpidag</emphasis> will append <emphasis>.XXX</emphasis> to path
+    where <emphasis>XXX</emphasis> is the retry number according to the retry numbering
+    scheme. (see <link linkend="TASK_STDIO"><emphasis role="strong">TASK STDIO</emphasis></link>)
+</simpara>
+</listitem>
+</varlistentry>
+</variablelist>
+</refsect1>
+<refsect1 id="DAG_FILES">
+<title>DAG Files</title>
+<simpara><emphasis role="strong">mpidag</emphasis> workflows are expressed using a simple text-based format similar
+to that used by Condor DAGMan. There are only two record types allowed
+in a DAG file: <emphasis role="strong">TASK</emphasis> and <emphasis role="strong">EDGE</emphasis>. Any blank lines in the DAG (lines with
+all whitespace characters) are ignored, as are any lines beginning with
+# (note that # can only appear at the beginning of a line, not in the
+middle).</simpara>
+<simpara>The format of a <emphasis role="strong">TASK</emphasis> record is:</simpara>
+<blockquote>
+<literallayout><emphasis role="strong">TASK</emphasis> <emphasis>id</emphasis> <emphasis>executable</emphasis> [<emphasis>arguments&#8230;</emphasis>]</literallayout>
+</blockquote>
+<simpara>Where <emphasis>id</emphasis> is the ID of the task, <emphasis>executable</emphasis> is the path to the executable
+or script to run, and <emphasis>arguments&#8230;</emphasis> is a space-separated list of
+arguments to pass to the task. An example is:</simpara>
+<screen>    TASK t01 /bin/program -a -b</screen>
+<simpara>The format of an <emphasis role="strong">EDGE</emphasis> record is:</simpara>
+<blockquote>
+<literallayout><emphasis role="strong">EDGE</emphasis> <emphasis>parent</emphasis> <emphasis>child</emphasis></literallayout>
+</blockquote>
+<simpara>Where <emphasis>parent</emphasis> is the ID of the parent task, and <emphasis>child</emphasis> is the ID of the
+child task. An example <emphasis role="strong">EDGE</emphasis> record is:</simpara>
+<screen>    EDGE t01 t02</screen>
+<simpara>A simple diamond-shaped workflow would look like this:</simpara>
+<screen>    # diamond.dag
+    TASK A /bin/echo "I am A"
+    TASK B /bin/echo "I am B"
+    TASK C /bin/echo "I am C"
+    TASK D /bin/echo "I am D"
+
+    EDGE A B
+    EDGE A C
+    EDGE B D
+    EDGE C D</screen>
+</refsect1>
+<refsect1 id="RESCUE_FILES">
+<title>Rescue Files</title>
+<simpara>Many different types of errors can occur when running a DAG. One or
+more of the tasks may fail, the MPI job may run out of wall time,
+<emphasis role="strong">mpidag</emphasis> may segfault (we hope not), the system may crash, etc. In order
+to ensure that the DAG does not need to be restarted from the beginning
+after an error, <emphasis role="strong">mpidag</emphasis> generates a rescue file for each workflow.</simpara>
+<simpara>The rescue file is a simple text file that lists all of the tasks in
+the workflow that have finished successfully. This file is updated each
+time a task finishes, and is flushed periodically so that if the work-
+flow fails and the user restarts it, <emphasis role="strong">mpidag</emphasis> can determine which tasks
+still need to be executed. As such, the rescue file is a sort-of trans-
+action log for the workflow.</simpara>
+<simpara>The rescue file contains zero or more DONE records. The format of these
+records is:</simpara>
+<blockquote>
+<literallayout><emphasis role="strong">DONE</emphasis> <emphasis>taskid</emphasis></literallayout>
+</blockquote>
+<simpara>Where <emphasis>taskid</emphasis> is the ID of the task that finished successfully.</simpara>
+<simpara>Rescue files are named <emphasis>DAGNAME.rescue.XXX</emphasis> where <emphasis>DAGNAME</emphasis> is the path to
+the input DAG file, and XXX is the current retry sequence number for
+the rescue file (see <link linkend="RETRY_NUMBERING"><emphasis role="strong">RETRY NUMBERING</emphasis></link>).</simpara>
+</refsect1>
+<refsect1 id="LOGGING">
+<title>Logging</title>
+<simpara>By default, all logging messages are printed to stdout. If you turn up
+the logging using <emphasis role="strong">-v</emphasis> then you may end up with a lot of stdout being
+forwarded from the workers to the master. To avoid that you can specify
+a log file using the <emphasis role="strong">-L</emphasis> argument. Note that if you use <emphasis role="strong">-L</emphasis> you will get
+N log files where N is the number of processes (master and workers),
+and that these N log files will not be merged into one at the end. Each
+process will append its rank to the log file name, so if you use:</simpara>
+<screen>    -L log/foo.log</screen>
+<simpara>you will get <emphasis>log/foo.log.0</emphasis>, <emphasis>log/foo.log.1</emphasis>, and so on.</simpara>
+<simpara>The log levels in order of severity are:</simpara>
+<screen>    FATAL
+    ERROR
+    WARN
+    INFO
+    DEBUG
+    TRACE</screen>
+<simpara>The default logging level is INFO. The logging levels can be
+increased/decreased with <emphasis role="strong">-v</emphasis> and <emphasis role="strong">-q</emphasis>.</simpara>
+</refsect1>
+<refsect1 id="TASK_STDIO">
+<title>Task STDIO</title>
+<simpara>By default the stdout/stderr of tasks will be saved into files called
+<emphasis>DAGNAME.out.XXX</emphasis> and <emphasis>DAGNAME.err.XXX</emphasis>, where <emphasis>DAGNAME</emphasis> is the path to the
+input DAG file, and <emphasis>XXX</emphasis> is the current retry sequence number for the
+out/err file  (see <link linkend="RETRY_NUMBERING"><emphasis role="strong">RETRY NUMBERING</emphasis></link>). You can change
+the path of these files with the <emphasis role="strong">-o</emphasis> and <emphasis role="strong">-e</emphasis> arguments. Note that the
+stdio of all workers will be merged into one out and one err file by the
+master at the end, so I/O from different workers will appear in a random
+order, but I/O from each worker will appear in the order that it was
+generated. Also note that, if the job fails for any reason, the outputs
+will not be merged, but instead there will be one file for each worker
+named as above, but with <emphasis>.X</emphasis> appended where <emphasis>X</emphasis> is the worker&#8217;s rank.</simpara>
+</refsect1>
+<refsect1 id="RETRY_NUMBERING">
+<title>Retry Numbering</title>
+<simpara>Each of the output, error, and rescue files are numbered with a suffix
+that starts at <emphasis>.000</emphasis> and increments by 1 each time the workflow is run
+(e.g. <emphasis>.000</emphasis>, <emphasis>.001</emphasis>, <emphasis>.002</emphasis>, and so on). This is done so that the user and
+<emphasis role="strong">mpidag</emphasis> can distinguish between the outputs of different workflow runs.</simpara>
+</refsect1>
+<refsect1 id="mpidag.txt_known_issues">
+<title>Known Issues</title>
+<refsect2 id="mpidag.txt_fork_and_exec">
+<title>fork() and exec()</title>
+<simpara>In order for the worker processes to start tasks on the compute
+node the compute nodes must support the <emphasis role="strong">fork()</emphasis> and <emphasis role="strong">exec()</emphasis> system
+calls. If your target machine runs a stripped-down OS on the
+compute nodes that does not support these system calls, then
+<emphasis role="strong">mpidag</emphasis> will not work.</simpara>
+</refsect2>
+<refsect2 id="mpidag.txt_cpu_usage">
+<title>CPU Usage</title>
+<simpara>Many MPI implementations are optimized so that message sends and
+receives do not block. The reasoning is that blocking adds over-
+head and, since many HPC systems use space sharing on dedicated
+hardware, there are no other processes competing, so spinning
+instead of blocking can produce better performance. On those
+MPI implementations the master and worker processes will run at
+100% CPU usage even when they are waiting. If this is a problem
+on your system, then there are some MPI implementations that
+<emphasis>do</emphasis> block on message send and receive. To test <emphasis role="strong">mpidag</emphasis>, for
+example, we use MPICH2 with the ch3:sock device instead of the
+ch3:nemesis device to avoid this issue.</simpara>
+</refsect2>
+</refsect1>
+<refsect1 id="mpidag.txt_author">
+<title>Author</title>
+<simpara>Gideon Juve <literal>&lt;juve@usc.edu&gt;</literal></simpara>
+</refsect1>
+</refentry>
