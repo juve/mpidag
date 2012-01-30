@@ -1,0 +1,5 @@
+This is a list of items that are planned in future versions of mpidag.
+
+* Task runtimes and exitcodes in rescue file (e.g. DONE foo 1 10.0000)
+* Allow retries to be specified with -r in DAG (e.g. TASK foo -r 3 /bin/date)
+* 
