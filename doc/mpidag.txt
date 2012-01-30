@@ -11,7 +11,9 @@ mpidag - a tool for running computational workflows expressed as DAGs
 
 Synopsis
 --------
-*mpidag* [*-h*] [*-v*] [*-q*] [*-s*] [*-L* 'path'] [*-o* 'path'] [*-e* 'path'] 'workflow.dag'
+[verse]
+*mpidag* [*-h*][*-v*][*-q*][*-s*][*-L* 'path'][*-o* 'path'][*-e* 'path'] 
+       [*-m* 'N'][*-t* 'N'] 'workflow.dag'
 
 
 Description
@@ -115,6 +117,13 @@ Options
     an invalid path. The default is 0, which means unlimited failures
     are allowed.
 
+*-t* 'N'::
+*--tries* 'N'::
+    Attempt to run each task 'N' times before marking the task as failed.
+    Note that the 'N' tries do not count as failures for the purposes of the
+    *-m* option. A task is only considered failed if it is tried 'N' times
+    and all 'N' attempts result in a non-zero exitcode. 'N' must be at least 
+    1. The default is 1.
 
 [[DAG_FILES]]
 DAG Files

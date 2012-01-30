@@ -25,7 +25,8 @@ void usage() {
             "   -o|--stdout PATH     Path to stdout file for tasks\n"
             "   -e|--stderr PATH     Path to stderr file for tasks\n"
             "   -s|--skip-rescue     Ignore existing rescue file (still creates one)\n"
-            "   -m|--max-failures N  Stop submitting tasks after N tasks have failed\n",
+            "   -m|--max-failures N  Stop submitting tasks after N tasks have failed\n"
+            "   -t|--tries N         Try tasks N times before marking them failed\n",
             program
         );
     }
@@ -84,6 +85,7 @@ int mpidag(int argc, char *argv[]) {
     int loglevel = LOG_INFO;
     bool skiprescue = false;
     int max_failures = 0;
+    int tries = 0;
     
     while (flags.size() > 0) {
         string flag = flags.front();
@@ -134,6 +136,27 @@ int mpidag(int argc, char *argv[]) {
             string N = flags.front();
             if (!sscanf(N.c_str(), "%d", &max_failures)) {
                 fprintf(stderr, "N for -m/--max-failures is invalid\n");
+                return 1;
+            }
+            if (max_failures < 0) {
+                fprintf(stderr, "N for -m/--max-failures must be >= 0\n");
+                return 1;
+            }
+        } else if (flag == "-t" || flag == "--tries") {
+            flags.pop_front();
+            if (flags.size() == 0) {
+                if (rank == 0) {
+                    fprintf(stderr, "-t/--tries requires N\n");
+                }
+                return 1;
+            }
+            string N = flags.front();
+            if (!sscanf(N.c_str(), "%d", &tries)) {
+                fprintf(stderr, "N for -t/--tries is invalid\n");
+                return 1;
+            }
+            if (tries < 1) {
+                fprintf(stderr, "N for -t/--tries must be >= 1\n");
                 return 1;
             }
         } else if (flag[0] == '-') {
@@ -232,7 +255,7 @@ int mpidag(int argc, char *argv[]) {
             log_debug("Using old rescue file: %s", oldrescue.c_str());
             log_debug("Using new rescue file: %s", newrescue.c_str());
             
-            DAG dag(dagfile, oldrescue, newrescue, max_failures);
+            DAG dag(dagfile, oldrescue, newrescue, max_failures, tries);
             
             return Master(&dag, outfile, errfile).run();
         } else {

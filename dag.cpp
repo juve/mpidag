@@ -13,14 +13,11 @@
 Task::Task(const string &name, const string &command) {
     this->name = name;
     this->command = command;
-    this->done = false;
+    this->success = false;
+    this->failures = 0;
 }
 
 Task::~Task() {
-}
-
-bool Task::is_done() {
-    return this->done;
 }
 
 bool Task::is_ready() {
@@ -31,7 +28,7 @@ bool Task::is_ready() {
     bool ready = true;
     for (unsigned j=0; j<this->parents.size(); j++) {
         Task *p = this->parents[j];
-        if (!p->done) {
+        if (!p->success) {
             ready = false;
         }
     }
@@ -39,12 +36,16 @@ bool Task::is_ready() {
 }
 
 DAG::DAG(const string &dagfile) {
+    this->max_failures = 0;
+    this->tries = 1;
     this->rescue = NULL;
     this->read_dag(dagfile);
     this->init();
 }
 
 DAG::DAG(const string &dagfile, const string &oldrescue) {
+    this->max_failures = 0;
+    this->tries = 1;
     this->rescue = NULL;
     this->read_dag(dagfile);
     if (!oldrescue.empty()) {
@@ -53,8 +54,15 @@ DAG::DAG(const string &dagfile, const string &oldrescue) {
     this->init();
 }
 
-DAG::DAG(const string &dagfile, const string &oldrescue, const string &newrescue, int max_failures) {
+DAG::DAG(const string &dagfile, const string &oldrescue, const string &newrescue, int max_failures, int tries) {
+    if (max_failures < 0) {
+        failure("max_failures must be >= 0");
+    }
+    if (tries < 1) {
+        failure("tries must be >= 1");
+    }
     this->max_failures = max_failures;
+    this->tries = tries;
     this->rescue = NULL;
     this->read_dag(dagfile);
     if (!oldrescue.empty()) {
@@ -84,7 +92,7 @@ void DAG::init() {
     map<string, Task *>::iterator i;
     for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
         Task *t = (*i).second;
-        if (t->is_ready() && !t->is_done()) {
+        if (t->is_ready() && !t->success) {
             this->queue_ready_task(t);
         }
     }
@@ -237,7 +245,7 @@ void DAG::read_rescue(const string &filename) {
             }
             
             Task *task = this->get_task(name);
-            task->done = true;
+            task->success = true;
         } else {
             failure("Invalid rescue record: %s", line);
         }
@@ -261,7 +269,7 @@ void DAG::open_rescue(const string &filename) {
     map<string, Task *>::iterator i;
     for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
         Task *t = (*i).second;
-        if (t->is_done()) {
+        if (t->success) {
             this->write_rescue(t);
         }
     }
@@ -290,11 +298,22 @@ void DAG::write_rescue(Task *task) {
 }
 
 void DAG::mark_task_finished(Task *t, int exitcode) {
-    // Mark task as done
+    
     if (exitcode == 0) {
-        t->done = true;
+        // Task succeeded
+        t->success = true;
         this->write_rescue(t);
     } else {
+        // Task failed
+        t->failures += 1;
+
+        //If job can be retried, then re-submit it
+        if (t->failures < this->tries) {
+            this->queue_ready_task(t);
+            return;
+        }
+        
+        // Otherwise count the failure
         this->failures += 1;
     }
 
@@ -354,7 +373,7 @@ bool DAG::is_failed() {
     map<string, Task *>::iterator i;
     for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
         Task *t = (*i).second;
-        if (!t->done) {
+        if (!t->success) {
             success = false;
             break;
         }

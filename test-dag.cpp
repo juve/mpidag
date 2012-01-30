@@ -232,7 +232,7 @@ void diamond_dag_rescue() {
 
 void diamond_dag_max_failures() {
     DAG dag("test/diamond.dag", "", "", 1);
-    
+
     if (!dag.has_ready_task()) {
         failure("Did not queue root tasks");
     }
@@ -257,11 +257,37 @@ void diamond_dag_max_failures() {
     }
 }
 
+void diamond_dag_retries() {
+    int tries = 3;
+
+    DAG dag("test/diamond.dag", "", "", 0, tries);
+    
+    Task *a;
+    
+    for (int i=0; i<tries; i++) {
+        if (!dag.has_ready_task()) {
+            failure("A should have been ready");
+        }
+        
+        a = dag.next_ready_task();
+        if (a->name.compare("A") != 0) {
+            failure("A should have been ready");
+        }
+        
+        dag.mark_task_finished(a, 1);
+    }
+    
+    if (dag.has_ready_task()) {
+        failure("DAG should not have a ready task because A failed");
+    }
+}
+
 int main(int argc, char *argv[]) {
     test_dag();
     diamond_dag();
     diamond_dag_failure();
     diamond_dag_max_failures();
+    diamond_dag_retries();
     diamond_dag_oldrescue();
     diamond_dag_newrescue();
     diamond_dag_rescue();

@@ -16,13 +16,13 @@ public:
     vector<Task *> children;
     vector<Task *> parents;
     
-    bool done;
+    bool success;
+    int failures;
     
     Task(const string &name, const string &command);
     ~Task();
     
     bool is_ready();
-    bool is_done();
 };
 
 class DAG {
@@ -32,6 +32,7 @@ class DAG {
     FILE *rescue;
     int failures;
     int max_failures;
+    int tries;
     
     // DAG files
     void read_dag(const string &filename);
@@ -50,7 +51,7 @@ class DAG {
 public:
     DAG(const string &dagfile);
     DAG(const string &dagfile, const string &oldrescue);
-    DAG(const string &dagfile, const string &oldrescue, const string &newrescue, int max_failures = 0);
+    DAG(const string &dagfile, const string &oldrescue, const string &newrescue, int max_failures = 0, int tries = 1);
     ~DAG();
     bool max_failures_reached();
     bool has_task(const string &name) const;

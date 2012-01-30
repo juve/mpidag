@@ -31,7 +31,10 @@
 mpidag \- a tool for running computational workflows expressed as DAGs (Directed Acyclic Graphs) on computational clusters using MPI\&.
 .SH "SYNOPSIS"
 .sp
-\fBmpidag\fR [\fB\-h\fR] [\fB\-v\fR] [\fB\-q\fR] [\fB\-s\fR] [\fB\-L\fR \fIpath\fR] [\fB\-o\fR \fIpath\fR] [\fB\-e\fR \fIpath\fR] \fIworkflow\&.dag\fR
+.nf
+\fBmpidag\fR [\fB\-h\fR][\fB\-v\fR][\fB\-q\fR][\fB\-s\fR][\fB\-L\fR \fIpath\fR][\fB\-o\fR \fIpath\fR][\fB\-e\fR \fIpath\fR]
+       [\fB\-m\fR \fIN\fR][\fB\-t\fR \fIN\fR] \fIworkflow\&.dag\fR
+.fi
 .SH "DESCRIPTION"
 .sp
 \fBmpidag\fR is a tool used to run HTC (High Throughput Computing) scientific workflows on systems designed for HPC (High Performance Computing)\&. Many HPC systems have custom architectures that are optimized for tightly\-coupled, parallel applications\&. These systems commonly have exotic, low\-latency networks that are designed for passing short messages very quickly between compute nodes\&. Many of these networks are so highly optimized that the compute nodes do not even support a TCP/IP stack\&. This makes it impossible to run HTC applications using software that was designed for commodity clusters, such as Condor\&.
@@ -129,6 +132,34 @@ has been reached,
 will finish running any tasks that have been started, but will not start any more tasks\&. This option is used to prevent
 \fBmpidag\fR
 from continuing to run a workflow that is suffering from a systematic error, such as a missing binary or an invalid path\&. The default is 0, which means unlimited failures are allowed\&.
+.RE
+.PP
+\fB\-t\fR \fIN\fR, \fB\-\-tries\fR \fIN\fR
+.RS 4
+Attempt to run each task
+\fIN\fR
+times before marking the task as failed\&. Note that the
+\fIN\fR
+tries do not count as failures for the purposes of the
+\fB\-m\fR
+option\&. A task is only considered failed if it is tried
+\fIN\fR
+times and all
+\fIN\fR
+attempts result in a non\-zero exitcode\&.
+\fIN\fR
+must be at least
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+The default is 1\&.
+.RE
 .RE
 .SH "DAG FILES"
 .sp
