@@ -232,7 +232,7 @@ int mpidag(int argc, char *argv[]) {
             log_debug("Using old rescue file: %s", oldrescue.c_str());
             log_debug("Using new rescue file: %s", newrescue.c_str());
             
-            DAG dag(dagfile, oldrescue, newrescue);
+            DAG dag(dagfile, oldrescue, newrescue, max_failures);
             
             return Master(&dag, outfile, errfile).run();
         } else {

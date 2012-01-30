@@ -122,7 +122,7 @@ int Master::run() {
     // Start time of workflow
     struct timeval start;
     gettimeofday(&start, NULL);
-    
+
     // While DAG has tasks to run
     while (!this->dag->is_finished()) {
         
@@ -193,6 +193,10 @@ int Master::run() {
     double stime = start.tv_sec + (start.tv_usec/1000000.0);
     double ftime = finish.tv_sec + (finish.tv_usec/1000000.0);
     log_info("Wall time: %lf seconds", (ftime-stime));
+    
+    if (this->dag->max_failures_reached()) {
+        log_error("Max failures reached");
+    }
     
     if (this->dag->is_failed()) {
         log_error("Workflow failed");
