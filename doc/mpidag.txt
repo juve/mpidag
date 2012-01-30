@@ -13,7 +13,7 @@ Synopsis
 --------
 [verse]
 *mpidag* [*-h*][*-v*][*-q*][*-s*][*-L* 'path'][*-o* 'path'][*-e* 'path'] 
-       [*-m* 'N'][*-t* 'N'] 'workflow.dag'
+       [*-m* 'M'][*-t* 'T'] 'workflow.dag'
 
 
 Description
@@ -107,23 +107,24 @@ Options
     scheme. The default is to use 'PATH.err.XXX' where 'PATH' is the
     path to the input DAG file. (see <<TASK_STDIO,*TASK STDIO*>>)
 
-*-m* 'N'::
-*--max-failures* 'N'::
-    Stop submitting new tasks after 'N' tasks have failed. Once 'N' 
+*-m* 'M'::
+*--max-failures* 'M'::
+    Stop submitting new tasks after 'M' tasks have failed. Once 'M' 
     has been reached, *mpidag* will finish running any tasks that have
     been started, but will not start any more tasks. This option is
     used to prevent *mpidag* from continuing to run a workflow that 
     is suffering from a systematic error, such as a missing binary or
-    an invalid path. The default is 0, which means unlimited failures
-    are allowed.
+    an invalid path. The default for 'M' is 0, which means unlimited 
+    failures are allowed.
 
-*-t* 'N'::
-*--tries* 'N'::
-    Attempt to run each task 'N' times before marking the task as failed.
-    Note that the 'N' tries do not count as failures for the purposes of the
-    *-m* option. A task is only considered failed if it is tried 'N' times
-    and all 'N' attempts result in a non-zero exitcode. 'N' must be at least 
-    1. The default is 1.
+*-t* 'T'::
+*--tries* 'T'::
+    Attempt to run each task 'T' times before marking the task as failed.
+    Note that the 'T' tries do not count as failures for the purposes of the
+    *-m* option. A task is only considered failed if it is tried 'T' times
+    and all 'T' attempts result in a non-zero exitcode. The value of 'T' must 
+    be at least 1. The default is 1.
+
 
 [[DAG_FILES]]
 DAG Files

@@ -33,7 +33,7 @@ mpidag \- a tool for running computational workflows expressed as DAGs (Directed
 .sp
 .nf
 \fBmpidag\fR [\fB\-h\fR][\fB\-v\fR][\fB\-q\fR][\fB\-s\fR][\fB\-L\fR \fIpath\fR][\fB\-o\fR \fIpath\fR][\fB\-e\fR \fIpath\fR]
-       [\fB\-m\fR \fIN\fR][\fB\-t\fR \fIN\fR] \fIworkflow\&.dag\fR
+       [\fB\-m\fR \fIM\fR][\fB\-t\fR \fIT\fR] \fIworkflow\&.dag\fR
 .fi
 .SH "DESCRIPTION"
 .sp
@@ -121,45 +121,36 @@ is the path to the input DAG file\&. (see
 \fBTASK STDIO\fR)
 .RE
 .PP
-\fB\-m\fR \fIN\fR, \fB\-\-max\-failures\fR \fIN\fR
+\fB\-m\fR \fIM\fR, \fB\-\-max\-failures\fR \fIM\fR
 .RS 4
 Stop submitting new tasks after
-\fIN\fR
+\fIM\fR
 tasks have failed\&. Once
-\fIN\fR
+\fIM\fR
 has been reached,
 \fBmpidag\fR
 will finish running any tasks that have been started, but will not start any more tasks\&. This option is used to prevent
 \fBmpidag\fR
-from continuing to run a workflow that is suffering from a systematic error, such as a missing binary or an invalid path\&. The default is 0, which means unlimited failures are allowed\&.
+from continuing to run a workflow that is suffering from a systematic error, such as a missing binary or an invalid path\&. The default for
+\fIM\fR
+is 0, which means unlimited failures are allowed\&.
 .RE
 .PP
-\fB\-t\fR \fIN\fR, \fB\-\-tries\fR \fIN\fR
+\fB\-t\fR \fIT\fR, \fB\-\-tries\fR \fIT\fR
 .RS 4
 Attempt to run each task
-\fIN\fR
+\fIT\fR
 times before marking the task as failed\&. Note that the
-\fIN\fR
+\fIT\fR
 tries do not count as failures for the purposes of the
 \fB\-m\fR
 option\&. A task is only considered failed if it is tried
-\fIN\fR
+\fIT\fR
 times and all
-\fIN\fR
-attempts result in a non\-zero exitcode\&.
-\fIN\fR
-must be at least
-.sp
-.RS 4
-.ie n \{\
-\h'-04' 1.\h'+01'\c
-.\}
-.el \{\
-.sp -1
-.IP "  1." 4.2
-.\}
-The default is 1\&.
-.RE
+\fIT\fR
+attempts result in a non\-zero exitcode\&. The value of
+\fIT\fR
+must be at least 1\&. The default is 1\&.
 .RE
 .SH "DAG FILES"
 .sp

@@ -19,7 +19,7 @@
 <refsynopsisdiv id="mpidag.txt_synopsis">
 <blockquote>
 <literallayout><emphasis role="strong">mpidag</emphasis> [<emphasis role="strong">-h</emphasis>][<emphasis role="strong">-v</emphasis>][<emphasis role="strong">-q</emphasis>][<emphasis role="strong">-s</emphasis>][<emphasis role="strong">-L</emphasis> <emphasis>path</emphasis>][<emphasis role="strong">-o</emphasis> <emphasis>path</emphasis>][<emphasis role="strong">-e</emphasis> <emphasis>path</emphasis>]
-       [<emphasis role="strong">-m</emphasis> <emphasis>N</emphasis>][<emphasis role="strong">-t</emphasis> <emphasis>N</emphasis>] <emphasis>workflow.dag</emphasis></literallayout>
+       [<emphasis role="strong">-m</emphasis> <emphasis>M</emphasis>][<emphasis role="strong">-t</emphasis> <emphasis>T</emphasis>] <emphasis>workflow.dag</emphasis></literallayout>
 </blockquote>
 </refsynopsisdiv>
 <refsect1 id="mpidag.txt_description">
@@ -170,44 +170,38 @@ lightweight and robust.</simpara>
 </varlistentry>
 <varlistentry>
 <term>
-<emphasis role="strong">-m</emphasis> <emphasis>N</emphasis>
+<emphasis role="strong">-m</emphasis> <emphasis>M</emphasis>
 </term>
 <term>
-<emphasis role="strong">--max-failures</emphasis> <emphasis>N</emphasis>
+<emphasis role="strong">--max-failures</emphasis> <emphasis>M</emphasis>
 </term>
 <listitem>
 <simpara>
-    Stop submitting new tasks after <emphasis>N</emphasis> tasks have failed. Once <emphasis>N</emphasis>
+    Stop submitting new tasks after <emphasis>M</emphasis> tasks have failed. Once <emphasis>M</emphasis>
     has been reached, <emphasis role="strong">mpidag</emphasis> will finish running any tasks that have
     been started, but will not start any more tasks. This option is
     used to prevent <emphasis role="strong">mpidag</emphasis> from continuing to run a workflow that
     is suffering from a systematic error, such as a missing binary or
-    an invalid path. The default is 0, which means unlimited failures
-    are allowed.
+    an invalid path. The default for <emphasis>M</emphasis> is 0, which means unlimited
+    failures are allowed.
 </simpara>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-<emphasis role="strong">-t</emphasis> <emphasis>N</emphasis>
+<emphasis role="strong">-t</emphasis> <emphasis>T</emphasis>
 </term>
 <term>
-<emphasis role="strong">--tries</emphasis> <emphasis>N</emphasis>
+<emphasis role="strong">--tries</emphasis> <emphasis>T</emphasis>
 </term>
 <listitem>
 <simpara>
-    Attempt to run each task <emphasis>N</emphasis> times before marking the task as failed.
-    Note that the <emphasis>N</emphasis> tries do not count as failures for the purposes of the
-    <emphasis role="strong">-m</emphasis> option. A task is only considered failed if it is tried <emphasis>N</emphasis> times
-    and all <emphasis>N</emphasis> attempts result in a non-zero exitcode. <emphasis>N</emphasis> must be at least
+    Attempt to run each task <emphasis>T</emphasis> times before marking the task as failed.
+    Note that the <emphasis>T</emphasis> tries do not count as failures for the purposes of the
+    <emphasis role="strong">-m</emphasis> option. A task is only considered failed if it is tried <emphasis>T</emphasis> times
+    and all <emphasis>T</emphasis> attempts result in a non-zero exitcode. The value of <emphasis>T</emphasis> must
+    be at least 1. The default is 1.
 </simpara>
-<orderedlist numeration="arabic">
-<listitem>
-<simpara>
-The default is 1.
-</simpara>
-</listitem>
-</orderedlist>
 </listitem>
 </varlistentry>
 </variablelist>
