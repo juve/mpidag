@@ -1,5 +1,5 @@
-#ifndef MPIDAG_LOG_H
-#define MPIDAG_LOG_H
+#ifndef LOG_H
+#define LOG_H
 
 #include "stdio.h"
 #include "stdarg.h"
@@ -36,4 +36,4 @@ bool log_debug();
 bool log_trace();
 
 
-#endif /* MPIDAG_LOG_H */
+#endif /* LOG_H */
