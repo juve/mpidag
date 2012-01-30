@@ -268,6 +268,31 @@ void diamond_dag_retries() {
         if (!dag.has_ready_task()) {
             failure("A should have been ready");
         }
+
+        a = dag.next_ready_task();
+        if (a->name.compare("A") != 0) {
+            failure("A should have been ready");
+        }
+
+        dag.mark_task_finished(a, 1);
+    }
+    
+    if (dag.has_ready_task()) {
+        failure("DAG should not have a ready task because A failed");
+    }
+}
+
+void diamond_dag_retries2() {
+    int tries = 3;
+
+    DAG dag("test/diamond.dag", "", "", 0, tries);
+    
+    Task *a;
+    
+    for (int i=0; i<tries-1; i++) {
+        if (!dag.has_ready_task()) {
+            failure("A should have been ready");
+        }
         
         a = dag.next_ready_task();
         if (a->name.compare("A") != 0) {
@@ -277,8 +302,24 @@ void diamond_dag_retries() {
         dag.mark_task_finished(a, 1);
     }
     
-    if (dag.has_ready_task()) {
-        failure("DAG should not have a ready task because A failed");
+    if (!dag.has_ready_task()) {
+        failure("A should have been ready");
+    }
+    
+    a = dag.next_ready_task();
+    if (a->name.compare("A") != 0) {
+        failure("A should have been ready");
+    }
+    
+    dag.mark_task_finished(a, 0);
+
+    if (!dag.has_ready_task()) {
+        failure("DAG should have a ready task because A finally succeeded");
+    }
+
+    Task *bc = dag.next_ready_task();
+    if (bc->name.compare("B")!=0 && bc->name.compare("C")!=0) {
+        failure("B or C should have been ready");
     }
 }
 
@@ -288,6 +329,7 @@ int main(int argc, char *argv[]) {
     diamond_dag_failure();
     diamond_dag_max_failures();
     diamond_dag_retries();
+    diamond_dag_retries2();
     diamond_dag_oldrescue();
     diamond_dag_newrescue();
     diamond_dag_rescue();
