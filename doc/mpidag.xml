@@ -175,7 +175,8 @@ lightweight and robust.</simpara>
     been started, but will not start any more tasks. This option is
     used to prevent <emphasis role="strong">mpidag</emphasis> from continuing to run a workflow that
     is suffering from a systematic error, such as a missing binary or
-    an invalid path.
+    an invalid path. The default is 0, which means unlimited failures
+    are allowed.
 </simpara>
 </listitem>
 </varlistentry>
