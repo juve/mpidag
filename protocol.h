@@ -16,5 +16,7 @@ void send_shutdown(int worker);
 int recv_request(string &name, string &command);
 void send_response(const string &name, int exitcode);
 void recv_response(string &name, int &exitcode, int &worker);
+double collect_total_runtimes();
+void send_total_runtime(double total_runtime);
 
 #endif /* PROTOCOL_H */

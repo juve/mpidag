@@ -129,7 +129,7 @@ int Worker::run() {
 
     // Send total_runtime
     log_trace("Worker %d: Sending total runtime to master", rank);
-    MPI_Reduce(&total_runtime, NULL, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    send_total_runtime(total_runtime);
     
     log_info("Worker %d: Exiting...", rank);
     

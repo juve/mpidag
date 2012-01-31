@@ -61,3 +61,14 @@ void recv_response(string &name, int &exitcode, int &worker) {
     name = buf+strlen(buf)+1;
     worker = status.MPI_SOURCE;
 }
+
+void send_total_runtime(double total_runtime) {
+    MPI_Reduce(&total_runtime, NULL, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+}
+
+double collect_total_runtimes() {
+    double ignore = 0.0;
+    double total_runtime = 0.0;
+    MPI_Reduce(&ignore, &total_runtime, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    return total_runtime;
+}

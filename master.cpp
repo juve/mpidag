@@ -159,9 +159,7 @@ int Master::run() {
 
     log_trace("Waiting for workers to finish");
 
-    double my_runtime = 0.0;
-    double total_runtime = 0.0;
-    MPI_Reduce(&my_runtime, &total_runtime, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    double total_runtime = collect_total_runtimes();
     log_info("Total runtime of tasks: %f", total_runtime);
 
     double stime = start.tv_sec + (start.tv_usec/1000000.0);
