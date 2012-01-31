@@ -202,11 +202,9 @@ int Master::run() {
     
     fclose(errf);
     fclose(outf);
-    
-    
-    
+        
     if (this->dag->max_failures_reached()) {
-        log_error("Max failures reached");
+        log_error("Max failures reached: DAG prematurely aborted");
     }
     
     if (this->dag->is_failed()) {
