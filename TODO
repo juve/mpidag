@@ -1,5 +1,6 @@
 This is a list of items that are planned in future versions of mpidag.
 
-* Task runtimes and exitcodes in rescue file (e.g. DONE foo 1 10.0000)
-* Allow retries to be specified with -r in DAG (e.g. TASK foo -r 3 /bin/date)
-* 
+* Separate DAG and WorkflowEngine
+* Add task runtimes and exitcodes in rescue file (e.g. DONE foo 1 10.0000)
+* Allow tries to be specified with -t/--tries in DAG (e.g. TASK foo --tries 3 /bin/date)
+* Enable priorities in DAG with -p/--priority (e.g. TASK foo --priority 10 /bin/date)
