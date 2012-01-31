@@ -245,6 +245,23 @@ that starts at '.000' and increments by 1 each time the workflow is run
 *mpidag* can distinguish between the outputs of different workflow runs.
 
 
+Misc
+----
+Resource Utilization
+~~~~~~~~~~~~~~~~~~~~
+At the end of the workflow run, the master will report the resource
+utilization of the job. This is done by adding up the total runtimes
+of all the tasks executed (including failed tasks) and dividing by
+the total wall time of the job times N, where N is both the total 
+number of processes including the master, and the total number of
+workers. These two resource utilization values are provided so that
+users can get an idea about how efficiently they are making use of
+the resources they allocated. Low resource utilization values suggest
+that the user should use fewer cores, and longer wall time, on future 
+runs, while high resource utilization values suggest that the user 
+could use more cores for future runs and get a shorter wall time.
+
+
 Known Issues
 ------------
 fork() and exec()
