@@ -1,6 +1,14 @@
 This is a list of items that are planned in future versions of mpidag.
 
-* Separate DAG and WorkflowEngine
-* Add task runtimes and exitcodes in rescue file (e.g. DONE foo 1 10.0000)
-* Allow tries to be specified with -t/--tries in DAG (e.g. TASK foo --tries 3 /bin/date)
-* Enable priorities in DAG with -p/--priority (e.g. TASK foo --priority 10 /bin/date)
+* Allow tries to be specified with -t/--tries in DAG (e.g. TASK A -t 3 /bin/date)
+* Add task runtimes in rescue file (e.g. DONE foo 10.0)?
+* Separate DAG and Engine into two separate components
+* Enable weight in DAG with -w/--weight (e.g. TASK A -w 10 /bin/date)
+* Enable -p/--priority as an alias for -w/--weight in DAG
+* Add support for priority-based scheduling using weights
+* Add BFS and DFS mode via level-based weights
+* Add support for more sophisticated scheduling? (e.g. homogeneous task 
+  scheduling like FCFS, EFT, ETF, HLFET, MCP, DCP, MD, and others described 
+  in the DCP paper) Some algorithms could use the weight as a strict 
+  priority, some could use the weight as a runtime estimate, and some could 
+  use weight as a, well, weight.
