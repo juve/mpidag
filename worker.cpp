@@ -9,6 +9,7 @@
 #include "worker.h"
 #include "protocol.h"
 #include "log.h"
+#include "failure.h"
 
 extern char **environ;
 
@@ -39,9 +40,15 @@ int Worker::run() {
     log_debug("Worker %d: Using stdout file: %s", rank, outfile.c_str());
     log_debug("Worker %d: Using stderr file: %s", rank, errfile.c_str());
     
-    // Truncate the stdout/stderr files
-    truncate(outfile.c_str(), 0);
-    truncate(errfile.c_str(), 0);
+    int out = open(outfile.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0000644);
+    if (out < 0) {
+        failures("Worker %d: unable to open task stdout", rank);
+    }
+    
+    int err = open(errfile.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0000644);
+    if (err < 0) {
+        failures("Worker %d: unable to open task stderr", rank);
+    }
     
     double total_runtime = 0.0;
 
@@ -73,20 +80,6 @@ int Worker::run() {
                 strcpy(argv[i], args[i].c_str());
             }
             argv[args.size()] = NULL; // Last one is null
-            
-            int out = open(outfile.c_str(), O_WRONLY|O_CREAT|O_APPEND, 0000644);
-            if (out < 0) {
-                fprintf(stderr, "%s: unable to open stdout: %s\n", 
-                    name.c_str(), strerror(errno));
-                exit(1);
-            }
-            
-            int err = open(errfile.c_str(), O_WRONLY|O_CREAT|O_APPEND, 0000644);
-            if (err < 0) {
-                fprintf(stderr, "%s: unable to open stderr: %s\n", 
-                    name.c_str(), strerror(errno));
-                exit(1);
-            }
             
             // Redirect stdout/stderr
             close(STDOUT_FILENO);
@@ -126,6 +119,9 @@ int Worker::run() {
         
         send_response(name, exitcode);
     }
+
+    close(out);
+    close(err);
 
     // Send total_runtime
     log_trace("Worker %d: Sending total runtime to master", rank);
