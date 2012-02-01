@@ -1,5 +1,6 @@
 This is a list of items that are planned in future versions of mpidag.
 
+* Call fsync on the rescue file periodically using SIGALRM?
 * Allow tries to be specified with -t/--tries in DAG (e.g. TASK A -t 3 /bin/date)
 * Add task runtimes in rescue file (e.g. DONE foo 10.0)?
 * Separate DAG and Engine into two separate components
