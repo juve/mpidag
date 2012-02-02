@@ -1,6 +1,6 @@
 DOCBOOK_XSL = /opt/local/share/xsl/docbook-xsl
 ifeq ($(shell test -d $(DOCBOOK_XSL) || echo n),n)
-$(error Set DOCBOOK_XSL to the path to your DocBook stylesheets)
+$(warning Set DOCBOOK_XSL to the path to your DocBook stylesheets)
 endif
 
 ASCIIDOC = asciidoc -d manpage -b docbook
