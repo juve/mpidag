@@ -1,7 +1,8 @@
-#include "log.h"
-#include "failure.h"
 #include "stdio.h"
 #include "stdlib.h"
+
+#include "log.h"
+#include "failure.h"
 
 int main(int argc, char *argv[]) {
     FILE *log = fopen("/dev/null", "w");

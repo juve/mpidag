@@ -2,6 +2,7 @@
 #define MASTER_H
 
 #include <queue>
+
 #include "dag.h"
 
 class Master {

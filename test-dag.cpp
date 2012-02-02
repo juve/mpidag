@@ -1,5 +1,6 @@
 #include <string>
 #include "stdio.h"
+
 #include "stdlib.h"
 #include "dag.h"
 #include "failure.h"
@@ -156,6 +157,13 @@ void diamond_dag_oldrescue() {
     }
 }
 
+void read_file(char *fname, char *buf) {
+    FILE *f = fopen(fname, "r");
+    int read = fread(buf, 1, 1024, f);
+    buf[read] = '\0';
+    fclose(f);
+}
+
 void diamond_dag_newrescue() {
 	char temp[1024];
 	sprintf(temp,"file_XXXXXX");
@@ -183,11 +191,8 @@ void diamond_dag_newrescue() {
         failure("DAG should be failed");
     }
     
-    FILE *f = fopen(temp, "r");
     char buf[1024];
-    int read = fread(buf, 1, 1024, f);
-	buf[read] = '\0';
-    fclose(f);
+    read_file(temp, buf);
     if (strcmp(buf, "\nDONE A\nDONE B\nDONE C") != 0) {
         failure("Rescue file not updated properly: %s", temp);
     } else {
@@ -225,11 +230,8 @@ void diamond_dag_rescue() {
         failure("DAG should not be failed");
     }
     
-    FILE *f = fopen(temp, "r");
     char buf[1024];
-    int read = fread(buf, 1, 1024, f);
-	buf[read] = '\0';
-    fclose(f);
+    read_file(temp, buf);
     if (strcmp(buf, "\nDONE A\nDONE B\nDONE C\nDONE D") != 0) {
         failure("Rescue file not updated properly: %s: %s", temp, buf);
     } else {

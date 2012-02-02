@@ -4,9 +4,10 @@
 #include "unistd.h"
 #include "stdio.h"
 #include "sys/wait.h"
-#include "mpi.h"
-#include "fcntl.h"
 #include "sys/time.h"
+#include "fcntl.h"
+#include "mpi.h"
+
 #include "worker.h"
 #include "protocol.h"
 #include "log.h"

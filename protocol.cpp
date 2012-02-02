@@ -1,5 +1,6 @@
-#include "mpi.h"
 #include "string.h"
+#include "mpi.h"
+
 #include "protocol.h"
 
 #define MAX_MESSAGE 16384

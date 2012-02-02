@@ -3,9 +3,9 @@
 
 #include <string>
 #include <exception>
-#include <cstdio>
-#include <cstring>
-#include <cerrno>
+#include "stdio.h"
+#include "string.h"
+#include "errno.h"
 
 class Failure : public std::exception {
     std::string *message;

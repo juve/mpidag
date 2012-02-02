@@ -1,11 +1,12 @@
-#include <cstdio>
-#include <cstring>
 #include <map>
 #include <vector>
+#include "string.h"
+#include "stdio.h"
 #include "unistd.h"
+
+#include "strlib.h"
 #include "dag.h"
 #include "failure.h"
-#include "strlib.h"
 #include "log.h"
 
 #define MAX_LINE 16384
