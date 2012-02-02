@@ -1,5 +1,6 @@
 #include "strlib.h"
 #include "errno.h"
+#include "stdlib.h"
 #include "unistd.h"
 #include "stdio.h"
 #include "sys/wait.h"
@@ -25,8 +26,8 @@ int Worker::run() {
     
     log_info("Worker %d: Starting...", rank);
     
-    string outfile;
-    string errfile;
+    std::string outfile;
+    std::string errfile;
     
     // Get outfile/errfile
     recv_stdio_paths(outfile, errfile);
@@ -53,8 +54,8 @@ int Worker::run() {
     double total_runtime = 0.0;
 
     while (1) {
-        string name;
-        string command;
+        std::string name;
+        std::string command;
         
         int shutdown = recv_request(name, command);
         
@@ -71,7 +72,7 @@ int Worker::run() {
         pid_t pid = fork();
         if (pid == 0) {
             // Process arguments
-            vector<string> args;
+            std::vector<std::string> args;
             split_args(args, command);
             // N + 1 for null-termination
             char **argv = (char **)malloc((args.size()+1) * sizeof(char *));

@@ -4,7 +4,7 @@
 #include "strlib.h"
 #include "failure.h"
 
-void test_trim(string &before, const string &after, const string &delim = " \t\r\n") {
+void test_trim(std::string &before, const std::string &after, const std::string &delim = " \t\r\n") {
     trim(before, delim);
     
     if (before.compare(after) != 0) {
@@ -12,8 +12,8 @@ void test_trim(string &before, const string &after, const string &delim = " \t\r
     }
 }
 
-void test_split_args(const string &arg, const vector<string> &result) {
-    vector<string> args;
+void test_split_args(const std::string &arg, const std::vector<std::string> &result) {
+    std::vector<std::string> args;
     
     split_args(args, arg);
     
@@ -22,16 +22,16 @@ void test_split_args(const string &arg, const vector<string> &result) {
     }
     
     for (unsigned i=0; i<args.size(); i++) {
-        string l = args[i];
-        string r = result[i];
+        std::string l = args[i];
+        std::string r = result[i];
         if (l.compare(r) != 0) {
             failure("Strings don't match: '%s' != '%s'", l.c_str(), r.c_str());
         }
     }
 }
 
-void test_split(const string &arg, const vector<string> &result, const string &delim = " \t\r\n", unsigned max = 0) {
-    vector<string> v;
+void test_split(const std::string &arg, const std::vector<std::string> &result, const std::string &delim = " \t\r\n", unsigned max = 0) {
+    std::vector<std::string> v;
     
     split(v, arg, delim, max);
     
@@ -40,8 +40,8 @@ void test_split(const string &arg, const vector<string> &result, const string &d
     }
     
     for (unsigned i = 0; i < v.size(); i++) {
-        string l = v[i];
-        string r = result[i];
+        std::string l = v[i];
+        std::string r = result[i];
         if (l.compare(r) != 0) {
             failure("Strings don't match: '%s' != '%s'", l.c_str(), r.c_str());
         }
@@ -49,7 +49,7 @@ void test_split(const string &arg, const vector<string> &result, const string &d
 }
 
 int main(int argc, char *argv[]) {
-    vector<string> v;
+    std::vector<std::string> v;
     
     // SPLIT
     v.push_back("foo");
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     test_split_args("escape\\b", v);
     v.clear();
     
-    string str;
+    std::string str;
     
     str += "   abc";
     test_trim(str, "abc");

@@ -5,11 +5,11 @@
 #include "dag.h"
 
 class Master {
-    string dagfile;
-    string outfile;
-    string errfile;
+    std::string dagfile;
+    std::string outfile;
+    std::string errfile;
     DAG *dag;
-    queue<int> idle;
+    std::queue<int> idle;
     
     void submit_task(Task *t, int worker);
     void wait_for_result();
@@ -17,9 +17,9 @@ class Master {
     bool has_idle_worker();
     void mark_worker_idle(int worker);
     int next_idle_worker();
-    void merge_task_stdio(FILE *dest, const string &src, const string &stream);
+    void merge_task_stdio(FILE *dest, const std::string &src, const std::string &stream);
 public:
-    Master(DAG *dag, const string &outfile, const string &errfile);
+    Master(DAG *dag, const std::string &outfile, const std::string &errfile);
     ~Master();
     int run();
 };

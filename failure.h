@@ -7,10 +7,8 @@
 #include <cstring>
 #include <cerrno>
 
-using namespace std;
-
-class Failure : public exception {
-    string *message;
+class Failure : public std::exception {
+    std::string *message;
 public:
     Failure(const char *message);
     ~Failure() throw ();

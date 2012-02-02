@@ -4,13 +4,11 @@
 #include <vector>
 #include <string>
 
-using namespace std;
+void trim(std::string &str, const std::string &delim = " \t\r\n");
 
-void trim(string &str, const string &delim = " \t\r\n");
+void split(std::vector<std::string> &v, const std::string &line, const std::string &delim = " \t\r\n", unsigned maxsplits = 0);
 
-void split(vector<string> &v, const string &line, const string &delim = " \t\r\n", unsigned maxsplits = 0);
-
-void split_args(vector<string> &v, const string &line);
+void split_args(std::vector<std::string> &v, const std::string &line);
 
 
 #endif /* STRLIB_H */

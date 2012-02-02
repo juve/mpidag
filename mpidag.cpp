@@ -7,8 +7,6 @@
 #include "failure.h"
 #include "log.h"
 
-using namespace std;
-
 static char *program;
 static int rank;
 
@@ -32,7 +30,7 @@ void usage() {
     }
 }
 
-bool file_exists(const string &filename) {
+bool file_exists(const std::string &filename) {
     int readok = access(filename.c_str(), R_OK);
     if (readok == 0) {
         return true;
@@ -49,8 +47,8 @@ bool file_exists(const string &filename) {
     failure("Unreachable");
 }
 
-int next_retry_file(string &name) {
-    string base = name;
+int next_retry_file(std::string &name) {
+    std::string base = name;
     int i;
     for (i=0; i<=100; i++) {
         char rbuf[5];
@@ -73,22 +71,22 @@ int mpidag(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     
-    list<char *> flags;
+    std::list<char *> flags;
     for (int i=1; i<argc; i++) {
         flags.push_back(argv[i]);
     }
     
-    string outfile;
-    string errfile;
-    string logfile;
-    list<string> args;
+    std::string outfile;
+    std::string errfile;
+    std::string logfile;
+    std::list<std::string> args;
     int loglevel = LOG_INFO;
     bool skiprescue = false;
     int max_failures = 0;
     int tries = 1;
     
     while (flags.size() > 0) {
-        string flag = flags.front();
+        std::string flag = flags.front();
         if (flag == "-h" || flag == "--help") {
             usage();
             return 0;
@@ -133,7 +131,7 @@ int mpidag(int argc, char *argv[]) {
                 }
                 return 1;
             }
-            string N = flags.front();
+            std::string N = flags.front();
             if (!sscanf(N.c_str(), "%d", &max_failures)) {
                 fprintf(stderr, "N for -m/--max-failures is invalid\n");
                 return 1;
@@ -150,7 +148,7 @@ int mpidag(int argc, char *argv[]) {
                 }
                 return 1;
             }
-            string N = flags.front();
+            std::string N = flags.front();
             if (!sscanf(N.c_str(), "%d", &tries)) {
                 fprintf(stderr, "N for -t/--tries is invalid\n");
                 return 1;
@@ -180,7 +178,7 @@ int mpidag(int argc, char *argv[]) {
         return 1;
     }
     
-    string dagfile = args.front();
+    std::string dagfile = args.front();
     
     if (numprocs < 2) {
         fprintf(stderr, "At least one worker process is required\n");
@@ -237,10 +235,10 @@ int mpidag(int argc, char *argv[]) {
             
             
             // Determine old and new rescue files
-            string rescuebase = dagfile;
+            std::string rescuebase = dagfile;
             rescuebase += ".rescue";
-            string oldrescue;
-            string newrescue = rescuebase;
+            std::string oldrescue;
+            std::string newrescue = rescuebase;
             int next = next_retry_file(newrescue);
             if (next == 0 || skiprescue) {
                 // Either there is no old rescue file, or the
@@ -272,6 +270,8 @@ int mpidag(int argc, char *argv[]) {
     if (log != NULL) {
         fclose(log);
     }
+
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
         int rc = mpidag(argc, argv);
         MPI_Finalize();
         return rc;
-    } catch (exception &error) {
+    } catch (std::exception &error) {
         // If we catch an execption here, then one of the
         // processes has hit an unsolvable problem and we
         // need to abort the entire workflow.

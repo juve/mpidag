@@ -6,7 +6,7 @@
 #include "protocol.h"
 #include "log.h"
 
-Master::Master(DAG *dag, const string &outfile, const string &errfile) {
+Master::Master(DAG *dag, const std::string &outfile, const std::string &errfile) {
     this->dagfile = dagfile;
     this->outfile = outfile;
     this->errfile = errfile;
@@ -24,7 +24,7 @@ void Master::submit_task(Task *task, int worker) {
 void Master::wait_for_result() {
     log_trace("Waiting for task to finish");
     
-    string name;
+    std::string name;
     int exitcode;
     int worker;
     recv_response(name, exitcode, worker);
@@ -64,7 +64,7 @@ void Master::mark_worker_idle(int worker) {
     this->idle.push(worker);
 }
 
-void Master::merge_task_stdio(FILE *dest, const string &srcfile, const string &stream) {
+void Master::merge_task_stdio(FILE *dest, const std::string &srcfile, const std::string &stream) {
     log_trace("Merging %s file: %s", stream.c_str(), srcfile.c_str());
     
     FILE *src = fopen(srcfile.c_str(), "r");
@@ -191,11 +191,11 @@ int Master::run() {
     for (int i=1; i<=numworkers; i++) {
         sprintf(dotrank, ".%d", i);
         
-        string toutfile = this->outfile;
+        std::string toutfile = this->outfile;
         toutfile += dotrank;
         this->merge_task_stdio(outf, toutfile, "stdout");
         
-        string terrfile = this->errfile;
+        std::string terrfile = this->errfile;
         terrfile += dotrank;
         this->merge_task_stdio(errf, terrfile, "stderr");
     }

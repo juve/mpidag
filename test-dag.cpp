@@ -1,5 +1,6 @@
 #include <string>
 #include "stdio.h"
+#include "stdlib.h"
 #include "dag.h"
 #include "failure.h"
 
@@ -156,7 +157,9 @@ void diamond_dag_oldrescue() {
 }
 
 void diamond_dag_newrescue() {
-    char *temp = tmpnam(NULL);
+	char temp[1024];
+	sprintf(temp,"file_XXXXXX");
+    mkstemp(temp);
     
     DAG dag("test/diamond.dag", "", temp);
     
@@ -182,7 +185,8 @@ void diamond_dag_newrescue() {
     
     FILE *f = fopen(temp, "r");
     char buf[1024];
-    fread(buf, 1, 1024, f);
+    int read = fread(buf, 1, 1024, f);
+	buf[read] = '\0';
     fclose(f);
     if (strcmp(buf, "\nDONE A\nDONE B\nDONE C") != 0) {
         failure("Rescue file not updated properly: %s", temp);
@@ -192,7 +196,9 @@ void diamond_dag_newrescue() {
 }
 
 void diamond_dag_rescue() {
-    char *temp = tmpnam(NULL);
+	char temp[1024];
+	sprintf(temp, "file_XXXXXX");
+    mkstemp(temp);
     
     DAG dag("test/diamond.dag", "test/diamond.rescue", temp);
     
@@ -221,10 +227,11 @@ void diamond_dag_rescue() {
     
     FILE *f = fopen(temp, "r");
     char buf[1024];
-    fread(buf, 1, 1024, f);
+    int read = fread(buf, 1, 1024, f);
+	buf[read] = '\0';
     fclose(f);
     if (strcmp(buf, "\nDONE A\nDONE B\nDONE C\nDONE D") != 0) {
-        failure("Rescue file not updated properly: %s", temp);
+        failure("Rescue file not updated properly: %s: %s", temp, buf);
     } else {
         unlink(temp);
     }

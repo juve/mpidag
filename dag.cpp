@@ -10,7 +10,7 @@
 
 #define MAX_LINE 16384
 
-Task::Task(const string &name, const string &command) {
+Task::Task(const std::string &name, const std::string &command) {
     this->name = name;
     this->command = command;
     this->success = false;
@@ -35,7 +35,7 @@ bool Task::is_ready() {
     return ready;
 }
 
-DAG::DAG(const string &dagfile) {
+DAG::DAG(const std::string &dagfile) {
     this->max_failures = 0;
     this->tries = 1;
     this->rescue = NULL;
@@ -43,7 +43,7 @@ DAG::DAG(const string &dagfile) {
     this->init();
 }
 
-DAG::DAG(const string &dagfile, const string &oldrescue) {
+DAG::DAG(const std::string &dagfile, const std::string &oldrescue) {
     this->max_failures = 0;
     this->tries = 1;
     this->rescue = NULL;
@@ -54,7 +54,7 @@ DAG::DAG(const string &dagfile, const string &oldrescue) {
     this->init();
 }
 
-DAG::DAG(const string &dagfile, const string &oldrescue, const string &newrescue, int max_failures, int tries) {
+DAG::DAG(const std::string &dagfile, const std::string &oldrescue, const std::string &newrescue, int max_failures, int tries) {
     if (max_failures < 0) {
         failure("max_failures must be >= 0");
     }
@@ -79,7 +79,7 @@ DAG::~DAG() {
     this->close_rescue();
     
     // Delete all tasks
-    map<string, Task *>::iterator i;
+    std::map<std::string, Task *>::iterator i;
     for (i = this->tasks.begin(); i != this->tasks.end(); i++) {
         delete (*i).second;
     }
@@ -89,7 +89,7 @@ void DAG::init() {
     this->failures = 0;
     
     // Queue all tasks that are ready, but not done
-    map<string, Task *>::iterator i;
+    std::map<std::string, Task *>::iterator i;
     for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
         Task *t = (*i).second;
         if (t->is_ready() && !t->success) {
@@ -98,11 +98,11 @@ void DAG::init() {
     }
 }
 
-bool DAG::has_task(const string &name) const {
+bool DAG::has_task(const std::string &name) const {
     return this->tasks.find(name) != this->tasks.end();
 }
 
-Task *DAG::get_task(const string &name) const {
+Task *DAG::get_task(const std::string &name) const {
     if (!this->has_task(name)) {
         return NULL;
     }
@@ -116,7 +116,7 @@ void DAG::add_task(Task *task) {
     this->tasks[task->name] = task;
 }
 
-void DAG::add_edge(const string &parent, const string &child) {
+void DAG::add_edge(const std::string &parent, const std::string &child) {
     if (!this->has_task(parent)) {
         failure("No such task: %s\n", parent.c_str());
     }
@@ -131,7 +131,7 @@ void DAG::add_edge(const string &parent, const string &child) {
     c->parents.push_back(p);
 }
 
-void DAG::read_dag(const string &filename) {
+void DAG::read_dag(const std::string &filename) {
     const char *DELIM = " \t\n\r";
     
     FILE *dagfile = fopen(filename.c_str(), "r");
@@ -141,7 +141,7 @@ void DAG::read_dag(const string &filename) {
     
     char line[MAX_LINE];
     while (fgets(line, MAX_LINE, dagfile) != NULL) {
-        string rec(line);
+        std::string rec(line);
         trim(rec);
         
         // Blank lines
@@ -155,7 +155,7 @@ void DAG::read_dag(const string &filename) {
         }
         
         if (rec.find("TASK", 0, 4) == 0) {
-            vector<string> v;
+            std::vector<std::string> v;
             
             split(v, rec, DELIM, 2);
             
@@ -163,8 +163,8 @@ void DAG::read_dag(const string &filename) {
                 failure("Invalid TASK record: %s\n", line);
             }
             
-            string name = v[1];
-            string cmd = v[2];
+            std::string name = v[1];
+            std::string cmd = v[2];
                         
             // Check for duplicate tasks
             if (this->has_task(name)) {
@@ -176,7 +176,7 @@ void DAG::read_dag(const string &filename) {
             this->add_task(t);
         } else if (rec.find("EDGE", 0, 4) == 0) {
             
-            vector<string> v;
+            std::vector<std::string> v;
             
             split(v, rec, DELIM, 2);
             
@@ -184,8 +184,8 @@ void DAG::read_dag(const string &filename) {
                 failure("Invalid EDGE record: %s\n", line);
             }
             
-            string parent = v[1];
-            string child = v[2];
+            std::string parent = v[1];
+            std::string child = v[2];
             
             this->add_edge(parent, child);
         } else {
@@ -197,7 +197,7 @@ void DAG::read_dag(const string &filename) {
     fclose(dagfile);
 }
 
-void DAG::read_rescue(const string &filename) {
+void DAG::read_rescue(const std::string &filename) {
     
     // Check if rescue file exists
     if (access(filename.c_str(), R_OK)) {
@@ -216,7 +216,7 @@ void DAG::read_rescue(const string &filename) {
     const char *DELIM = " \t\n\r";
     char line[MAX_LINE];
     while (fgets(line, MAX_LINE, rescuefile) != NULL) {
-        string rec(line);
+        std::string rec(line);
         trim(rec);
         
         // Blank lines
@@ -230,7 +230,7 @@ void DAG::read_rescue(const string &filename) {
         }
         
         if (rec.find("DONE", 0, 4) == 0) {
-            vector<string> v;
+            std::vector<std::string> v;
             
             split(v, rec, DELIM, 1);
             
@@ -238,7 +238,7 @@ void DAG::read_rescue(const string &filename) {
                 failure("Invalid DONE record: %s\n", line);
             }
             
-            string name = v[1];
+            std::string name = v[1];
             
             if (!this->has_task(name)) {
                 failure("Unknown task %s in rescue file", name.c_str());
@@ -259,14 +259,14 @@ void DAG::queue_ready_task(Task *t) {
     this->queue.insert(t);
 }
 
-void DAG::open_rescue(const string &filename) {
+void DAG::open_rescue(const std::string &filename) {
     this->rescue = fopen(filename.c_str(), "a");
     if (this->rescue == NULL) {
         failure("Unable to open rescue file: %s", filename.c_str());
     }
     
     // Mark done tasks as done in the new rescue file
-    map<string, Task *>::iterator i;
+    std::map<std::string, Task *>::iterator i;
     for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
         Task *t = (*i).second;
         if (t->success) {
@@ -370,7 +370,7 @@ bool DAG::is_failed() {
     }
     
     bool success = true;
-    map<string, Task *>::iterator i;
+    std::map<std::string, Task *>::iterator i;
     for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
         Task *t = (*i).second;
         if (!t->success) {

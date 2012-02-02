@@ -1,7 +1,7 @@
 #include "failure.h"
 
 Failure::Failure(const char *message) {
-    this->message = new string(message);
+    this->message = new std::string(message);
 }
 
 Failure::~Failure() throw () {

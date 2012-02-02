@@ -3,19 +3,17 @@
 
 #include <string>
 
-using namespace std;
-
 #define TAG_COMMAND 1
 #define TAG_RESULT 2
 #define TAG_SHUTDOWN 3
 
-void send_stdio_paths(const string &outfile, const string &errfile);
-void recv_stdio_paths(string &outfile, string &errfile);
-void send_request(const string &name, const string &command, int worker);
+void send_stdio_paths(const std::string &outfile, const std::string &errfile);
+void recv_stdio_paths(std::string &outfile, std::string &errfile);
+void send_request(const std::string &name, const std::string &command, int worker);
 void send_shutdown(int worker);
-int recv_request(string &name, string &command);
-void send_response(const string &name, int exitcode);
-void recv_response(string &name, int &exitcode, int &worker);
+int recv_request(std::string &name, std::string &command);
+void send_response(const std::string &name, int exitcode);
+void recv_response(std::string &name, int &exitcode, int &worker);
 double collect_total_runtimes();
 void send_total_runtime(double total_runtime);
 

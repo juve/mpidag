@@ -3,7 +3,7 @@
 /**
  * Trim all characters in delim off of both ends of str
  */
-void trim(string &str, const string &delim) {
+void trim(std::string &str, const std::string &delim) {
     if (str.length() == 0) {
         return;
     }
@@ -42,8 +42,8 @@ void trim(string &str, const string &delim) {
 /**
  * Split line on delim a maximum of maxsplits times and store the result in v
  */
-void split(vector<string> &v, const string &line, const string &delim, unsigned maxsplits) {
-    string arg;
+void split(std::vector<std::string> &v, const std::string &line, const std::string &delim, unsigned maxsplits) {
+    std::string arg;
     for (unsigned i=0; i<line.length(); i++) {
         char c = line[i];
         if ((maxsplits != 0 && v.size() == maxsplits) || delim.find(c) == delim.npos) {
@@ -66,8 +66,8 @@ void split(vector<string> &v, const string &line, const string &delim, unsigned 
 /**
  * Split line using command-line argument splitting and store the result in args
  */
-void split_args(vector<string> &args, const string &line) {
-    string arg;
+void split_args(std::vector<std::string> &args, const std::string &line) {
+    std::string arg;
     bool inquote = false;
     for (unsigned i=0; i<line.length(); i++) {
         char c = line[i];
