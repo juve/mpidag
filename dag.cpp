@@ -26,14 +26,15 @@ bool Task::is_ready() {
     if (this->parents.empty()) {
         return true;
     }
-    bool ready = true;
+    
     for (unsigned j=0; j<this->parents.size(); j++) {
         Task *p = this->parents[j];
         if (!p->success) {
-            ready = false;
+            return false;
         }
     }
-    return ready;
+    
+    return true;
 }
 
 DAG::DAG(const std::string &dagfile) {
