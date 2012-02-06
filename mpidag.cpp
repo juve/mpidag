@@ -3,6 +3,8 @@
 #include "stdlib.h"
 #include "mpi.h"
 
+#include "dag.h"
+#include "engine.h"
 #include "master.h"
 #include "worker.h"
 #include "failure.h"
@@ -254,9 +256,10 @@ int mpidag(int argc, char *argv[]) {
             log_debug("Using old rescue file: %s", oldrescue.c_str());
             log_debug("Using new rescue file: %s", newrescue.c_str());
             
-            DAG dag(dagfile, oldrescue, newrescue, max_failures, tries);
+            DAG dag(dagfile, oldrescue);
+            Engine engine(dag, newrescue, max_failures, tries);
             
-            return Master(&dag, outfile, errfile).run();
+            return Master(engine, dag, outfile, errfile).run();
         } else {
             return Worker().run();
         }

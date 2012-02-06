@@ -37,66 +37,17 @@ bool Task::is_ready() {
     return true;
 }
 
-DAG::DAG(const std::string &dagfile) {
-    this->max_failures = 0;
-    this->tries = 1;
-    this->rescue = NULL;
+DAG::DAG(const std::string &dagfile, const std::string &rescuefile) {
     this->read_dag(dagfile);
-    this->init();
-}
-
-DAG::DAG(const std::string &dagfile, const std::string &oldrescue) {
-    this->max_failures = 0;
-    this->tries = 1;
-    this->rescue = NULL;
-    this->read_dag(dagfile);
-    if (!oldrescue.empty()) {
-        this->read_rescue(oldrescue);
+    if (!rescuefile.empty()) {
+        this->read_rescue(rescuefile);
     }
-    this->init();
-}
-
-DAG::DAG(const std::string &dagfile, const std::string &oldrescue, const std::string &newrescue, int max_failures, int tries) {
-    if (max_failures < 0) {
-        failure("max_failures must be >= 0");
-    }
-    if (tries < 1) {
-        failure("tries must be >= 1");
-    }
-    this->max_failures = max_failures;
-    this->tries = tries;
-    this->rescue = NULL;
-    this->read_dag(dagfile);
-    if (!oldrescue.empty()) {
-        this->read_rescue(oldrescue);
-    }
-    if (!newrescue.empty()) {
-        this->open_rescue(newrescue);
-    }
-    this->init();
 }
 
 DAG::~DAG() {
-    // Close rescue file
-    this->close_rescue();
-    
     // Delete all tasks
-    std::map<std::string, Task *>::iterator i;
-    for (i = this->tasks.begin(); i != this->tasks.end(); i++) {
+    for (iterator i = this->begin(); i != this->end(); i++) {
         delete (*i).second;
-    }
-}
-
-void DAG::init() {
-    this->failures = 0;
-    
-    // Queue all tasks that are ready, but not done
-    std::map<std::string, Task *>::iterator i;
-    for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
-        Task *t = (*i).second;
-        if (t->is_ready() && !t->success) {
-            this->queue_ready_task(t);
-        }
     }
 }
 
@@ -254,132 +205,4 @@ void DAG::read_rescue(const std::string &filename) {
     }
     
     fclose(rescuefile);
-}
-
-void DAG::queue_ready_task(Task *t) {
-    this->ready.push(t);
-    this->queue.insert(t);
-}
-
-void DAG::open_rescue(const std::string &filename) {
-    this->rescue = fopen(filename.c_str(), "a");
-    if (this->rescue == NULL) {
-        failure("Unable to open rescue file: %s", filename.c_str());
-    }
-    
-    // Mark done tasks as done in the new rescue file
-    std::map<std::string, Task *>::iterator i;
-    for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
-        Task *t = (*i).second;
-        if (t->success) {
-            this->write_rescue(t);
-        }
-    }
-}
-
-bool DAG::has_rescue() {
-    return this->rescue != NULL;
-}
-
-void DAG::close_rescue() {
-    if (this->has_rescue()) {
-        fclose(this->rescue);
-        this->rescue = NULL;
-    }
-}
-
-void DAG::write_rescue(Task *task) {
-    if (this->has_rescue()) {
-        if (fprintf(this->rescue, "\nDONE %s", task->name.c_str()) < 0) {
-            log_error("Error writing to rescue file: %s", strerror(errno));
-        }
-        if (fflush(this->rescue)) {
-            log_error("Error flushing rescue file: %s", strerror(errno));
-        }
-    }
-}
-
-void DAG::mark_task_finished(Task *t, int exitcode) {
-    
-    if (exitcode == 0) {
-        // Task succeeded
-        t->success = true;
-        this->write_rescue(t);
-    } else {
-        // Task failed
-        t->failures += 1;
-
-        //If job can be retried, then re-submit it
-        if (t->failures < this->tries) {
-            this->queue_ready_task(t);
-            return;
-        }
-        
-        // Otherwise count the failure
-        this->failures += 1;
-    }
-
-    // Remove from the queue
-    this->queue.erase(t);
-    
-    if (max_failures_reached()) {
-        // Clear ready queue
-        while (this->has_ready_task()) {
-            Task *t = this->next_ready_task();
-            this->queue.erase(t);
-        }
-    } else {
-        // Release ready children
-        for (unsigned i=0; i<t->children.size(); i++) {
-            Task *c = t->children[i];
-            if (c->is_ready()) {
-                this->queue_ready_task(c);
-            }
-        }
-    }
-    
-    // If we are finished, close rescue
-    if (this->is_finished()) {
-        this->close_rescue();
-    }
-}
-
-bool DAG::max_failures_reached() {
-    return this->failures >= this->max_failures && this->max_failures != 0;
-}
-
-bool DAG::has_ready_task() {
-    return !this->ready.empty();
-}
-
-Task *DAG::next_ready_task() {
-    if (!this->has_ready_task()) {
-        failure("No ready tasks");
-    }
-    Task *t = this->ready.front();
-    this->ready.pop();
-    return t;
-}
-
-bool DAG::is_finished() {
-    return this->queue.empty();
-}
-
-bool DAG::is_failed() {
-    bool finished = this->is_finished();
-    if (!finished) {
-        failure("Not finished");
-    }
-    
-    bool success = true;
-    std::map<std::string, Task *>::iterator i;
-    for (i=this->tasks.begin(); i!=this->tasks.end(); i++) {
-        Task *t = (*i).second;
-        if (!t->success) {
-            success = false;
-            break;
-        }
-    }
-    
-    return !success;
 }

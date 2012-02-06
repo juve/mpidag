@@ -16,6 +16,7 @@ MAKE = make
 
 OBJS += strlib.o
 OBJS += failure.o
+OBJS += engine.o
 OBJS += dag.o
 OBJS += master.o
 OBJS += worker.o
@@ -27,6 +28,7 @@ PROGRAMS += mpidag
 TESTS += test-strlib
 TESTS += test-dag
 TESTS += test-log
+TESTS += test-engine
 
 all: $(PROGRAMS)
 
@@ -35,6 +37,7 @@ mpidag: mpidag.o $(OBJS)
 test-strlib: test-strlib.o $(OBJS)
 test-dag: test-dag.o $(OBJS)
 test-log: test-log.o $(OBJS)
+test-engine: test-engine.o $(OBJS)
 
 test: $(TESTS)
 	for test in $^; do echo $$test; ./$$test; done

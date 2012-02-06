@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "unistd.h"
 #include "sys/time.h"
 #include "mpi.h"
 
@@ -7,11 +8,12 @@
 #include "protocol.h"
 #include "log.h"
 
-Master::Master(DAG *dag, const std::string &outfile, const std::string &errfile) {
+Master::Master(Engine &engine, DAG &dag, const std::string &outfile, const std::string &errfile) {
     this->dagfile = dagfile;
     this->outfile = outfile;
     this->errfile = errfile;
-    this->dag = dag;
+    this->engine = &engine;
+    this->dag = &dag;
 }
 
 Master::~Master() {
@@ -41,7 +43,7 @@ void Master::wait_for_result() {
         log_error("Task %s failed with exitcode %d", name.c_str(), exitcode);
     }
     Task *t = this->dag->get_task(name);
-    this->dag->mark_task_finished(t, exitcode);
+    this->engine->mark_task_finished(t, exitcode);
 }
 
 void Master::add_worker(int worker) {
@@ -125,16 +127,16 @@ int Master::run() {
     }
     
     // While DAG has tasks to run
-    while (!this->dag->is_finished()) {
+    while (!this->engine->is_finished()) {
         
         // Submit as many tasks as we can
-        while (this->dag->has_ready_task() && this->has_idle_worker()) {
+        while (this->engine->has_ready_task() && this->has_idle_worker()) {
             int worker = this->next_idle_worker();
-            Task *task = this->dag->next_ready_task();
+            Task *task = this->engine->next_ready_task();
             this->submit_task(task, worker);
         }
         
-        if (!this->dag->has_ready_task()) {
+        if (!this->engine->has_ready_task()) {
             log_debug("No ready tasks");
         }
         
@@ -204,11 +206,11 @@ int Master::run() {
     fclose(errf);
     fclose(outf);
         
-    if (this->dag->max_failures_reached()) {
+    if (this->engine->max_failures_reached()) {
         log_error("Max failures reached: DAG prematurely aborted");
     }
     
-    if (this->dag->is_failed()) {
+    if (this->engine->is_failed()) {
         log_error("Workflow failed");
         return 1;
     } else {

@@ -3,6 +3,7 @@
 
 #include <queue>
 
+#include "engine.h"
 #include "dag.h"
 
 class Master {
@@ -10,6 +11,7 @@ class Master {
     std::string outfile;
     std::string errfile;
     DAG *dag;
+    Engine *engine;
     std::queue<int> idle;
     
     void submit_task(Task *t, int worker);
@@ -20,7 +22,7 @@ class Master {
     int next_idle_worker();
     void merge_task_stdio(FILE *dest, const std::string &src, const std::string &stream);
 public:
-    Master(DAG *dag, const std::string &outfile, const std::string &errfile);
+    Master(Engine &engine, DAG &dag, const std::string &outfile, const std::string &errfile);
     ~Master();
     int run();
 };
