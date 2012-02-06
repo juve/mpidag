@@ -17,7 +17,6 @@ class Engine {
     int tries;
     
     void queue_ready_task(Task *t);
-    void init();
 
     void open_rescue(const std::string &rescuefile);
     void close_rescue();
@@ -26,8 +25,7 @@ class Engine {
 public:
     Engine(DAG &dag, const std::string &rescuefile = "", int max_failures = 0, int tries = 1);
     ~Engine();
-
-
+    
     bool max_failures_reached();
     void mark_task_finished(Task *t, int exitcode);
     bool has_ready_task();

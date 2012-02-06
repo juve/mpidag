@@ -24,25 +24,21 @@ Engine::Engine(DAG &dag, const std::string &rescuefile, int max_failures, int tr
     if (!rescuefile.empty()) {
         this->open_rescue(rescuefile);
     }
-    this->init();
-}
-
-Engine::~Engine() {
-    // Close rescue file
-    this->close_rescue();
-}
-
-void Engine::init() {
+    
     this->failures = 0;
     
     // Queue all tasks that are ready, but not done
-    DAG::iterator i;
     for (DAG::iterator i=this->dag->begin(); i!=this->dag->end(); i++) {
         Task *t = (*i).second;
         if (t->is_ready() && !t->success) {
             this->queue_ready_task(t);
         }
     }
+}
+
+Engine::~Engine() {
+    // Close rescue file
+    this->close_rescue();
 }
 
 void Engine::queue_ready_task(Task *t) {
