@@ -76,9 +76,9 @@ int Worker::run() {
             std::vector<std::string> args;
             split_args(args, command);
             // N + 1 for null-termination
-            char **argv = (char **)malloc((args.size()+1) * sizeof(char *));
+            char **argv = new char*[args.size()+1];
             for (unsigned i=0; i<args.size(); i++) {
-                argv[i] = (char *)malloc(sizeof(char)*(args[i].size()+1));
+                argv[i] = new char[args[i].size()+1];
                 strcpy(argv[i], args[i].c_str());
             }
             argv[args.size()] = NULL; // Last one is null
