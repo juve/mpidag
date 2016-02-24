@@ -1,3 +1,6 @@
+Note: This code has been merged into Pegasus (github.com/pegasus-isi/pegasus)
+as Pegasus-MPI-Cluster and is no longer maintained.
+
 This is a workflow engine that runs as an MPI job.
 
 The workflows are simple DAGs (Directed Acyclic Graphs) described with a
